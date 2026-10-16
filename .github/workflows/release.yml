@@ -1,0 +1,78 @@
+name: Draft release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag matching firemedia.__version__ (for example v0.2.0)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+      - name: Check version tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: python3 tools/prepare_release.py --tag "$RELEASE_TAG" --check-only
+
+  build:
+    needs: version
+    uses: ./.github/workflows/build.yml
+    with:
+      ref: ${{ inputs.tag || github.ref_name }}
+      build_windows: true
+
+  draft:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: '*-build'
+          merge-multiple: true
+          path: artifacts
+      - name: Assemble versioned downloads and checksums
+        run: python3 tools/prepare_release.py --tag "$RELEASE_TAG" --repository "$GH_REPO" --input-dir artifacts
+      - name: Create a draft for release review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft > existing-draft.txt 2>/dev/null; then
+            if [[ "$(cat existing-draft.txt)" != "true" ]]; then
+              echo 'Refusing to overwrite a published release.' >&2
+              exit 1
+            fi
+            gh release upload "$RELEASE_TAG" release-output/* --clobber
+          else
+            flags=()
+            if [[ "$RELEASE_TAG" =~ (a|b|rc)[0-9]+$ ]]; then flags+=(--prerelease); fi
+            gh release create "$RELEASE_TAG" release-output/* --verify-tag --draft --title "FireMedia $RELEASE_TAG" --generate-notes "${flags[@]}"
+          fi

@@ -1,0 +1,29 @@
+name: Bug report
+description: Report unexpected FireMedia behavior
+body:
+  - type: input
+    id: version
+    attributes:
+      label: FireMedia version
+      placeholder: Version or source commit
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: System and installation method
+      placeholder: Linux distribution + desktop + Wayland/X11, or Windows version; source/deb/portable/installer
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Include reproduction steps, expected behavior, and relevant settings such as LDM/preset.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or logs
+      description: Remove private paths and personal information. A small generated test file is preferable to private media.

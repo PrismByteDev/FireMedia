@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.PrismByteDev.FireMedia</id>
+  <name>FireMedia</name>
+  <summary>Play media with music fireworks and art subtitles</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.github.prismbytedev"><name>PrismByteDev</name></developer>
+  <launchable type="desktop-id">io.github.PrismByteDev.FireMedia.desktop</launchable>
+  <description>
+    <p>FireMedia is a native audio and video player with a physics-driven music
+    visualizer, collision fog, configurable particles, and a live audio waveform.</p>
+    <p>Manage playlists, customize interface themes, adjust EQ and video effects,
+    and style subtitles with fonts, gradients, outlines, and optional sparks.</p>
+  </description>
+  <url type="homepage">https://github.com/PrismByteDev/FireMedia</url>
+  <url type="bugtracker">https://github.com/PrismByteDev/FireMedia/issues</url>
+  <url type="vcs-browser">https://github.com/PrismByteDev/FireMedia</url>
+  <provides><binary>firemedia</binary></provides>
+  <categories><category>AudioVideo</category><category>Player</category></categories>
+  <content_rating type="oars-1.1"/>
+  <!-- Add the actual public release/version/date when the Flatpak is built. -->
+  <releases/>
+</component>

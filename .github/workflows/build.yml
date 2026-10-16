@@ -1,0 +1,100 @@
+name: Build and test
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        default: ''
+      build_windows:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Install native playback and test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libmpv2 ffmpeg libseccomp2 dbus-x11 libglib2.0-bin libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0
+          python -m pip install . build
+      - name: Test in an isolated session bus
+        env:
+          FIREMEDIA_TEST_DBUS: '1'
+        run: dbus-run-session -- timeout 90s python -m unittest discover -s tests -v
+      - name: Build Linux and Python packages
+        run: |
+          python packaging/linux/build-deb.py
+          python -m build --outdir dist/python
+          python -m firemedia --help
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-build
+          path: |
+            dist/*.deb
+            dist/python/*.whl
+            dist/python/*.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+
+  windows:
+    if: inputs.build_windows
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      PYTHONUTF8: '1'
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Prepare playback dependencies and installer compiler
+        shell: pwsh
+        run: |
+          ./packaging/windows/fetch-playback.ps1
+          "$pwd/vendor/windows" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          if (-not (Test-Path "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe")) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Could not install Inno Setup.' }
+          }
+      - name: Build portable app and per-user installer
+        shell: pwsh
+        run: ./packaging/windows/build.ps1 -Installer -PythonExecutable python
+      - name: Test portable core and packaged startup
+        shell: pwsh
+        run: |
+          foreach ($suite in @('test_core.py','test_formats.py','test_runtime.py','test_analysis.py','test_release.py')) {
+            & ./.venv-build/Scripts/python.exe -m unittest discover -s tests -p $suite -v
+            if ($LASTEXITCODE -ne 0) { throw "Test failed: $suite" }
+          }
+          $process = Start-Process ./dist/FireMedia/FireMedia.exe -ArgumentList '--help' -PassThru -Wait
+          if ($process.ExitCode -ne 0) { throw 'Packaged app startup failed.' }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-build
+          path: |
+            dist/FireMedia-windows-x64.zip
+            dist/*-windows-x64-setup.exe
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1

@@ -1,0 +1,9 @@
+{
+  "format": "FireMediaPlugin",
+  "api": 1,
+  "id": "firemedia.orbit-stars",
+  "name": "Orbit Stars",
+  "version": "1.0.0",
+  "entry": "plugin.py",
+  "description": "A radial spectrum, collision sparks, and subtitle event example."
+}

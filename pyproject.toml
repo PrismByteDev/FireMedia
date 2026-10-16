@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "firemedia"
+dynamic = ["version"]
+description = "A native media player with physics-driven music visualization"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+dependencies = ["PyQt6>=6.6", "numpy>=1.24"]
+
+[project.scripts]
+firemedia = "firemedia.__main__:main"
+
+[project.gui-scripts]
+FireMedia = "firemedia.__main__:main"
+
+[project.optional-dependencies]
+package = ["pyinstaller>=6.11,<7", "Pillow>=10"]
+
+[project.urls]
+Homepage = "https://github.com/PrismByteDev/FireMedia"
+Issues = "https://github.com/PrismByteDev/FireMedia/issues"
+Source = "https://github.com/PrismByteDev/FireMedia"
+
+[tool.setuptools.dynamic]
+version = {attr = "firemedia.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["firemedia*"]
+
+[tool.setuptools.package-data]
+firemedia = ["assets/*.svg", "assets/*.png"]

@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Name=FireMedia
+Comment=Play audio, video, and playlists with music visualization
+Exec=firemedia %U
+Icon=firemedia
+Terminal=false
+Categories=AudioVideo;Player;Qt;
+MimeType=audio/mpeg;audio/flac;audio/ogg;audio/x-wav;video/mp4;video/x-matroska;video/webm;audio/x-mpegurl;application/vnd.apple.mpegurl;
+StartupWMClass=FireMedia

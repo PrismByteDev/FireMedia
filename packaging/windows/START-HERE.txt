@@ -1,0 +1,20 @@
+FireMedia Windows build kit
+
+1. Copy FireMedia-source.zip from this disc to your Windows Desktop.
+2. Right-click the ZIP and choose Extract All. Do not build inside the ZIP or CD.
+3. Install 64-bit Python 3.12 from python.org if it is not already installed.
+   Keep the Python launcher enabled in the installer.
+4. Open the extracted FireMedia folder and double-click BUILD-WINDOWS.cmd.
+   It downloads playback tools and Python build dependencies, then builds the app.
+5. Open dist\FireMedia\FireMedia.exe.
+
+The complete portable app is also in dist\FireMedia-windows-x64.zip.
+Recipients do not need Python. Share the full ZIP, not just the EXE.
+
+The optional Windows setup wizard is described in packaging\README.md.
+The Windows port is ready for testing; it has not yet been verified in this VM.
+KDE media controls remain Linux-only. Embedded video requires OpenGL 3.2;
+VM display drivers may need software OpenGL support.
+
+No files on the VM are changed by mounting this disc. The build script creates
+.venv-build, vendor, build, and dist inside the extracted project folder.
