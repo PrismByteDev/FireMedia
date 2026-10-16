@@ -10,7 +10,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Install 64-bit Python 3.12 with the Python launcher first.' }
     }
     $python = Join-Path $root '.venv-build/Scripts/python.exe'
-    & $python -m pip install '.[package]'
+    & $python -m pip install -c packaging/constraints.txt '.[package]'
     if ($LASTEXITCODE -ne 0) { throw 'Could not install build dependencies.' }
     & $python -c "from PIL import Image; Image.open('firemedia/assets/logo2k.png').save('packaging/windows/firemedia.ico',sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])"
     if ($LASTEXITCODE -ne 0) { throw 'Could not generate application icon.' }

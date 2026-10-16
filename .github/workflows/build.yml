@@ -32,7 +32,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends libmpv2 ffmpeg libseccomp2 dbus-x11 libglib2.0-bin libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0
-          python -m pip install . build
+          python -m pip install -c packaging/constraints.txt . build
       - name: Test in an isolated session bus
         env:
           FIREMEDIA_TEST_DBUS: '1'
