@@ -36,7 +36,7 @@ class ReleaseTests(unittest.TestCase):
     def test_release_inventory_hashes_match_every_packaged_asset(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);inputs=root/'inputs';inputs.mkdir();output=root/'out'
-            for name in (f'firemedia_{__version__}_all.deb','FireMedia-windows-x64.zip',f'FireMedia-{__version__}-windows-x64-setup.exe'):
+            for name in (f'firemedia_{__version__}_all.deb','FireMedia-windows-x64.zip',f'FireMedia-{__version__}-windows-x64-setup.exe',f'FireMedia-{__version__}-x86_64.AppImage'):
                 (inputs/name).write_bytes(('fixture for '+name).encode())
             inventory=prepare_release(inputs,output,'v'+__version__)
             self.assertEqual(inventory,json.loads((output/'release-info.json').read_text()))

@@ -9,7 +9,7 @@ Build on Linux using Python 3.11+ and `dpkg-deb`:
 
 ```sh
 python3 packaging/linux/build-deb.py
-sudo apt install ./dist/firemedia_0.2.0_all.deb
+sudo apt install ./dist/firemedia_0.3.0_all.deb
 ```
 
 Open **FireMedia** in the application menu. APT installs Python, Qt, NumPy,
@@ -61,7 +61,7 @@ For a setup wizard and Start-menu shortcut, install
 [Inno Setup 6](https://jrsoftware.org/isinfo.php), run
 `powershell -ExecutionPolicy Bypass -File .\packaging\windows\build.ps1 -Installer`.
 This passes the version from `firemedia.__version__` to the installer compiler. The resulting
-`dist/FireMedia-0.2.0-windows-x64-setup.exe` installs per user and includes an
+`dist/FireMedia-0.3.0-windows-x64-setup.exe` installs per user and includes an
 uninstaller. A desktop shortcut is optional. Signing installers is a separate
 release step; these build recipes do not apply a publisher signature.
 
@@ -103,14 +103,22 @@ package must be built on Windows: see
 [PyInstaller's operating-mode documentation](https://pyinstaller.org/en/stable/operating-mode.html).
 
 
-## GitHub builds, Flathub, and planned updates
+## GitHub builds, AppImage, Flathub, and updates
 
 See [the release guide](../docs/RELEASING.md) for CI and draft releases. The
 versioned source exporter is `python3 tools/build_source.py`; it omits local
 builds, credentials, vendor binaries, and app state. Windows portable/installer
 builds include this FireMedia source archive and build-environment information.
 
-[Flathub preparation](flatpak/README.md) targets other Linux distributions.
-The [automatic update design](../docs/UPDATES.md) records the requested modes;
-it is not implemented in the current installer. No background update task is
-registered by these build recipes.
+The AppImage job builds on Ubuntu 22.04 (glibc 2.35+) and bundles the player,
+Python/Qt, libmpv, FFmpeg, and libseccomp. Locally install those native libraries
+and `pip install '.[package]'`, then run `python3 packaging/appimage/build.py`.
+Build tools/runtime are pinned by SHA-256. Background updates use an optional
+systemd user timer. Desktop/GPU/audio compatibility needs testing on each target
+distribution; an AppImage is not a guarantee of compatibility with every Linux.
+
+[Flathub preparation](flatpak/README.md) remains separate. The
+[update documentation](../docs/UPDATES.md) describes platform modes, signatures,
+staging/restart, task removal, and publishing-key setup. Windows setup asks about
+background updates and registering media files in Open With; it does not override
+Windows' user-selected default apps.

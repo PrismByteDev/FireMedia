@@ -1,165 +1,126 @@
-# Automatic update design
+# Updates and playback wake locks
 
-Status: **planned, not yet implemented**. This document records the requested
-behavior and the implementation sequence. Existing FireMedia builds do not
-check for updates, install a scheduled task, or replace themselves.
+FireMedia 0.3.0 introduces signed automatic updates. Existing 0.2.0 builds have
+no updater: install a new build once to receive future updates. A published stable
+release must contain a valid `update.json` signed with FireMedia's publishing key.
+Drafts and prereleases never trigger stable automatic installation.
 
-Project/release location: `PrismByteDev/FireMedia` on GitHub. GitHub preparation
-includes build workflows and draft releases. `release-info.json` is an unsigned
-build inventory, **not** a trusted auto-install manifest.
+## Platforms and modes
 
-## Windows installer
+Choose **Settings → Updates**. Notify is the default; unattended installation is
+opt-in. The Windows installer and AppImage first-run setup ask about background
+updates and media-file registration.
 
-Settings → Updates offers these modes. The installer also offers the choice;
-the proposed initial selection is Notify, with background installation opt-in.
-The chosen mode persists across upgrades and can be changed later.
+| Platform | Modes | When FireMedia is closed |
+|---|---|---|
+| Windows installer | Background, Update on launch, Notify, Disabled | Background uses a per-user Task Scheduler task every ten minutes while signed in, plus logon |
+| AppImage | Background (systemd user session required), Update on launch, Notify, Disabled | Background uses a systemd user timer every ten minutes; no root/system service |
+| Windows portable | Notify, Disabled | No checks or installation |
+| Flatpak | Notify, Disabled | No FireMedia task; updates belong to the software manager |
+| Source / Debian package | Notify, Disabled | No FireMedia task; use the package manager/manual download |
 
-| Mode | App closed | On launch / app running | Installation |
-|---|---|---|---|
-| Background updates | Check every 10 minutes while the user is signed in | Same updater; no duplicate checks | Download and install silently. A running player keeps its current version; a Windows notification says an update is installed and offers Restart. |
-| Update on launch | No scheduled checks | Check on launch, then every 10 minutes while running | Install available updates without an approval prompt. Prefer a ready new version at launch; if a download is still running, open the current version and notify when a restart is needed. |
-| Notify | No scheduled checks | Check on launch and every 10 minutes while running | Windows notification asks whether to update. Installation starts only after the user chooses Update. |
-| Disabled | No checks | No automatic checks | No automatic download/install. An explicit Check now remains available. |
+Enabled modes check after launch and every ten minutes while running. Background
+and Update on launch download/install a verified update automatically. Notify
+announces an available update; installed Windows/AppImage builds offer **Update
+now** in Settings. Windows notifications also offer Update or Restart. Portable
+notifications open Releases. Disabled sends no automatic update requests; the
+explicit **Check now** button still works. Checks run independently of visualizer
+activity; minimized windows do not resume graphics effects to check for updates.
 
-Background mode uses a **per-user Task Scheduler task**, repeating every ten
-minutes with a logon trigger. It runs without administrator privileges and only
-while that user is signed in; it is not a system service or an always-running
-polling process. Sleep/offline periods do not cause a backlog. A failed check
-waits until the next interval. A shared lock prevents task/app/installer races.
-Changing away from Background removes/disables the task. Uninstall removes it.
+AppImage Background appears only with a functioning systemd user session.
+The file and its containing directory must be writable and support hard links.
+Moving an integrated AppImage requires rerunning setup/settings so its desktop
+entry and background timer use the new path. Turning Background off removes its
+user timer. Windows uninstall removes its task. Before manually deleting an
+AppImage, switch its update mode away from Background. Unattended checks do not
+run after logout and never install a system-wide service.
 
-Use native **Windows notifications**, with a stable application identity,
-Start-menu shortcut, and activation handler. Actions are Update, Restart, and
-View release as appropriate. Windows owns notification permissions/quiet hours.
-If delivery is unavailable, show the same status in Settings/in the app.
-Coalesce notifications by release version; never issue one toast every ten
-minutes for an already-announced release.
+Flatpak checks Flathub appstream releases, rather than assuming a GitHub release
+is already on Flathub. Notifications use the desktop portal. There is currently
+no published Flathub listing; Flatpak publication/testing remains separate work.
+No updater runs sudo, pkexec, or an unattended `flatpak update`.
 
-### Install while FireMedia is running
+## Installation and restart
 
-Do not overwrite the executable, Python runtime, Qt DLLs, or playback DLLs used
-by an open process. Move from the current single-folder installer to:
+Installed Windows builds use:
 
-```text
+```
 %LOCALAPPDATA%/Programs/FireMedia/
-  FireMedia.exe                 stable launcher
-  FireMediaUpdate.exe           installed update/task entry point
-  current.json                  atomically selected version, no commands/URLs
-  versions/
-    0.2.0/                      current process can keep using this directory
-    0.3.0/                      staged, verified replacement
+  FireMedia.exe             stable launcher
+  FireMediaUpdate.exe       short-lived updater/task/protocol helper
+  install.json
+  current.json              selected version and previous version
+  versions/0.3.0/           complete app + Qt + playback libraries
+  versions/0.3.1/           next complete version
 ```
 
-The helper downloads to a temporary directory on the same volume, verifies the
-signed metadata, length, hash, package identity, and extraction limits, then
-installs a complete version directory. It atomically changes the launcher pointer
-only after the directory is complete. New launches use the new version; a running
-old player remains functional. The notification says **installed; restart to
-apply**, rather than implying that a running process has changed its code.
+New versions are extracted into staging, then moved into a new immutable version
+folder. The launcher pointer changes atomically only after verification and
+extraction finish. Running players keep their existing files. Old version folders
+are retained for manual recovery; no automatic deletion or automatic rollback is
+attempted. The stable helper is updated by a new installer, not by overwriting a
+helper that is executing. A release requiring a newer updater must use a new
+installer; this helper rejects incompatible manifests.
 
-Restart uses local authenticated IPC: save queue/settings, acknowledge shutdown,
-wait for the old process to exit, then start the installed version. Do not pass
-paths or commands from a notification or release description to a shell.
-Keep the last working version for rollback. Clean it up only after a successful
-new launch and after confirming no process still uses it. Updater/launcher
-replacement needs its own staged handoff, never an in-use DLL overwrite.
+AppImage updates download to the same filesystem, preserve the previous image as
+`FireMedia.AppImage.previous`, then replace the image atomically. An open mounted
+player continues running its original image. Restart launches the new image.
 
-Migrate existing per-user Inno Setup installs without moving user state or media.
-Keep the existing installer AppId. User data remains in Qt's application-data
-directory, separate from version folders. Schema changes must preserve a backup
-and support the retained version before automatic rollback is enabled.
+After installation, Settings and Windows notifications offer Restart. Restart
+saves the queue/settings and current source/position/pause state. Windows uses
+per-session random nonces and checks that process handles belong to installed
+FireMedia executables; it asks processes to exit and waits without forcibly
+terminating them. If a player is busy, close/reopen it manually. Playback resumes
+from the saved position. A normal reopen selects the installed version too.
 
-## Windows portable
+Update configuration/status lives beside FireMedia's app state in `updates.json`
+and `update-status.json`. Updates never send media paths, playlist names, or
+listening history. HTTPS requests still expose normal network metadata to the
+release/download provider. Avoid editing update files while an updater runs.
 
-Only **Notify** and **Disabled** are offered. Notify checks on launch and every
-ten minutes while FireMedia is running, using Windows notifications. Its action
-opens the project's GitHub Releases page. It does not download, overwrite,
-extract, or install an update. There is no scheduled task in portable mode.
+## Trust and publishing
 
-An explicit packaging marker distinguishes installer/portable builds; do not
-infer this from whether a directory is writable. Copying an EXE alone is not a
-supported portable installation.
+`release-info.json` and SHA256SUMS are inventories; they do not authorize automatic
+installation. `update.json` is an Ed25519-signed canonical JSON envelope containing
+repository, stable channel, version, issuance/expiry, sequence, minimum updater,
+and exact platform package URLs/sizes/SHA-256 hashes. The embedded public key is
+`firemedia/update_keys.json`. Private keys must never be committed or distributed.
 
-## Linux / Flathub
+The Draft release workflow builds Windows, AppImage, and Debian/Python packages,
+then signs metadata with the repository secret **FIREMEDIA_UPDATE_SIGNING_KEY**.
+The signing step fails if the secret is absent or does not match the embedded
+public key. Configure this secret with explicit maintainer approval. A local
+private key backup is ignored under `.signing/`; keep an independent secure backup.
 
-Flathub is the intended distribution-independent installation/update route.
-App ID: **`io.github.PrismByteDev.FireMedia`**. Keep the `.deb` recipe for users
-who prefer it. FireMedia's Linux update modes are **Notify** and **Disabled**.
+Signed metadata expires after one year; refresh it through a reviewed release
+before it expires. Unknown keys, tampered signatures, wrong channels/platforms,
+expired/future/replayed metadata, older/equal versions, unsafe redirects, length
+and hash mismatches, ZIP traversal/links/Windows aliases and extraction-limit
+violations are rejected. Offline/failed/interrupted checks leave the current
+version selected. A shared OS lock prevents simultaneous task/app installations.
+No access token is shipped in clients. Conditional requests reuse signed cached
+metadata, and failed automatic checks wait until the next interval.
 
-Notify checks while the app is running (on launch, then ten-minute intervals).
-For Flatpak, compare with the version actually available on Flathub, not merely
-the newest GitHub tag: Flathub publication may lag a GitHub release. Use the
-desktop notification portal and an Open software center / View Flathub action.
-The user or their system's software manager performs the update. FireMedia
-does not invoke `sudo`, `pkexec`, a host shell, or an unattended Flatpak update.
-The software manager's own auto-update policy is independent of this setting.
+Before publishing, test two real versions on Windows and AppImage: active audio
+and video playback, notifications and activation, background after app exit,
+launch mode, Notify, Disabled, restart resume, task/timer removal, an offline
+check, a corrupt download, and a full/locked destination. CI verifies updater
+policy/trust/atomic staging and packaged startup; it does not replace this desktop
+upgrade acceptance test. Windows publisher/Authenticode signing is separate.
 
-For `.deb`/source installs, Notify can link to the release and explain the
-appropriate package-manager/manual update route. Disabled does not change
-the system package manager's configuration. No FireMedia background task is
-installed on Linux.
+## Wake lock
 
-Flathub work includes a tested Flatpak manifest, pinned dependency sources,
-AppStream/desktop/icon metadata, file/notification portal handling, MPRIS,
-media-device/OpenGL access, and local/relative-playlist checks. Use KDE's
-maintained runtime and PyQt BaseApp rather than bundling an unrelated Qt runtime.
-Keep filesystem permissions limited to read-only music/video directories plus
-explicit portal grants; do not request general host execution. Verify the
-existing mod worker's seccomp restrictions inside Flatpak; fail closed if nested
-restriction setup fails. See [Flatpak preparation](../packaging/flatpak/README.md).
+**Settings → Prevent sleep during playback** is enabled by default. Playing audio
+inhibits automatic suspend; video additionally inhibits display idle/screensaver.
+Pause, stop, end of queue, disabling the setting, and closing the player release
+it. The lock stays active for playback in a minimized window without running
+visual effects. It never blocks a deliberate user shutdown/sleep request.
 
-## Discovery, trust, and failures
+Windows uses SetThreadExecutionState on the UI thread. Linux uses the Inhibit
+portal (including Flatpak), with freedesktop PowerManagement/ScreenSaver fallbacks
+for desktops without it. Requests are asynchronous; late replies are released
+when playback has already stopped. Desktop policy can refuse inhibition.
 
-All channels use HTTPS, bounded responses, request timeouts, and version-aware
-comparison. Stable installations ignore drafts/prereleases and older versions.
-Cache discovery metadata and use conditional requests. Prefer small release
-assets/CDN metadata over giving every installation a ten-minute GitHub API poll;
-do not embed an access token to bypass API rate limits.
-No media paths, playlist names, or listening history are sent. Requests expose
-normal network metadata to GitHub/Flathub; Disabled makes no update requests.
-
-The Windows installer helper must authenticate an update **before** silent
-installation. Plan an Ed25519-signed, canonical manifest containing repository,
-channel, version, monotonic release number, expiry, supported OS/architecture,
-minimum updater version, package length/hash, and an exact release asset URL.
-Embed trusted public keys in the helper. Keep signing private keys outside Git.
-Reject invalid/expired metadata, downgrades/replays, wrong-platform packages,
-redirects outside approved download hosts, missing assets, and extraction paths
-that escape staging. Key rotation needs overlap signed by an existing trusted
-key. Establish signature/test vectors before enabling automatic installation.
-
-SHA-256 checksums detect damage; they do not independently authenticate a
-publisher. GitHub release digests/attestations are additional provenance, not
-a reason to execute unsigned update metadata. Consider immutable GitHub releases
-once the complete asset set has been reviewed and attached. Authenticode signing
-is a separate Windows distribution task, not a replacement for manifest checks.
-
-Offline checks, interrupted downloads, full disks, locked files, rejected
-signatures, and failed launches leave the current working version intact.
-Use resumable staging only when the resumed content is reverified. Disable
-restart actions until installation has succeeded. Never force a restart during
-playback. The updater is independent of visualizer timers: minimizing the player
-continues to suspend effects, even if the user opted into background updates.
-
-## Implementation sequence and acceptance
-
-1. **Release foundation (this preparation):** one version source, Linux/Windows
-   builds, source archive, checksums/inventory, draft release, contribution docs.
-2. **Flathub:** build/test the manifest on supported architectures, validate
-   portals/playlists/covers/OpenGL/MPRIS/mod restrictions, then submit for review.
-3. **Discovery/settings/notifications:** package markers, version comparison,
-   ten-minute checks, mode persistence, native notification activation, duplicate
-   suppression, and Linux/portable release/store links. No binary installation.
-4. **Authenticated Windows updater:** signed manifests, staged version layout,
-   per-user installer migration, scheduled task, locking, session-save/restart,
-   success reporting and rollback. Enable silent modes only after these pass.
-5. **Release verification:** test all four installer modes, portable behavior,
-   disabled-network behavior, app-open/app-closed checks, multi-instance use,
-   minimize/restore, offline/retry, download interruption, signature/rollback
-   rejection, disk-full/locked files, task removal on uninstall, and a real
-   two-version upgrade on Windows 10/11 and Flatpak-capable Linux desktops.
-
-References: [GitHub release API](https://docs.github.com/en/rest/releases/releases),
-[immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases),
-[Flathub requirements](https://docs.flathub.org/docs/for-app-authors/requirements),
-[PyQt BaseApp](https://github.com/flathub/com.riverbankcomputing.PyQt.BaseApp).
+References: [AppImage updates](https://docs.appimage.org/packaging-guide/optional/updates.html),
+[Inhibit portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Inhibit.html),
+[Windows execution state](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setthreadexecutionstate).

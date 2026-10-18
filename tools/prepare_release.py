@@ -34,7 +34,8 @@ def prepare_release(input_dir,output_dir,tag,repository='PrismByteDev/FireMedia'
     packages=[
         (f'firemedia_{__version__}_all.deb',f'firemedia_{__version__}_all.deb','linux-deb','all'),
         ('FireMedia-windows-x64.zip',f'FireMedia-{__version__}-windows-x64.zip','windows-portable','x86_64'),
-        (f'FireMedia-{__version__}-windows-x64-setup.exe',f'FireMedia-{__version__}-windows-x64-setup.exe','windows-installer','x86_64')]
+        (f'FireMedia-{__version__}-windows-x64-setup.exe',f'FireMedia-{__version__}-windows-x64-setup.exe','windows-installer','x86_64'),
+        (f'FireMedia-{__version__}-x86_64.AppImage',f'FireMedia-{__version__}-x86_64.AppImage','linux-appimage','x86_64')]
     for filename,*_ in packages:
         path=source/filename
         if not path.is_file() or path.is_symlink() or not path.stat().st_size:raise ValueError(f'Missing or empty build asset: {filename}')

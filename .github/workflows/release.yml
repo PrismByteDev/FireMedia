@@ -37,6 +37,7 @@ jobs:
     with:
       ref: ${{ inputs.tag || github.ref_name }}
       build_windows: true
+      build_appimage: true
 
   draft:
     needs: build
@@ -59,6 +60,12 @@ jobs:
           path: artifacts
       - name: Assemble versioned downloads and checksums
         run: python3 tools/prepare_release.py --tag "$RELEASE_TAG" --repository "$GH_REPO" --input-dir artifacts
+      - name: Sign automatic update metadata
+        env:
+          FIREMEDIA_UPDATE_SIGNING_KEY: ${{ secrets.FIREMEDIA_UPDATE_SIGNING_KEY }}
+        run: |
+          python3 -m pip install 'cryptography>=43'
+          python3 tools/sign_updates.py release-output
       - name: Create a draft for release review
         env:
           GH_TOKEN: ${{ github.token }}

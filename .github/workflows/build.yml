@@ -9,6 +9,9 @@ on:
       build_windows:
         type: boolean
         default: false
+      build_appimage:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -87,19 +90,48 @@ jobs:
         shell: pwsh
         run: |
           $failedSuites = @()
-          foreach ($suite in @('test_core.py','test_formats.py','test_runtime.py','test_analysis.py','test_release.py')) {
+          foreach ($suite in @('test_core.py','test_formats.py','test_runtime.py','test_analysis.py','test_release.py','test_updates.py')) {
             & ./.venv-build/Scripts/python.exe -m unittest discover -s tests -p $suite -v
             if ($LASTEXITCODE -ne 0) { $failedSuites += $suite }
           }
           $process = Start-Process ./dist/FireMedia/FireMedia.exe -ArgumentList '--help' -PassThru -Wait
           if ($process.ExitCode -ne 0) { throw 'Packaged app startup failed.' }
           if ($failedSuites.Count) { throw "Tests failed: $($failedSuites -join ', ')" }
+          $helper = Start-Process ./dist/FireMediaUpdate.exe -ArgumentList '--help' -PassThru -Wait
+          if ($helper.ExitCode -ne 0) { throw 'Update helper startup failed.' }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-build
           path: |
             dist/FireMedia-windows-x64.zip
             dist/*-windows-x64-setup.exe
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1
+
+  appimage:
+    if: inputs.build_appimage
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Install playback and packaging dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libmpv1 ffmpeg libseccomp2 libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-render-util0 squashfs-tools
+          python -m pip install -c packaging/constraints.txt '.[package]'
+      - name: Build and smoke-test AppImage
+        run: python packaging/appimage/build.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: appimage-build
+          path: dist/*.AppImage
           compression-level: 0
           if-no-files-found: error
           retention-days: 1

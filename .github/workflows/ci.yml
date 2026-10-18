@@ -10,6 +10,10 @@ on:
         description: Also build and test the Windows packages
         type: boolean
         default: true
+      build_appimage:
+        description: Also build and test the AppImage
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -23,3 +27,4 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       build_windows: ${{ github.event_name == 'workflow_dispatch' && inputs.build_windows }}
+      build_appimage: ${{ github.event_name == 'workflow_dispatch' && inputs.build_appimage }}

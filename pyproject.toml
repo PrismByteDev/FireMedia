@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
-dependencies = ["PyQt6>=6.6", "numpy>=1.24"]
+dependencies = ["PyQt6>=6.6", "numpy>=1.24", "cryptography>=43"]
 
 [project.scripts]
 firemedia = "firemedia.__main__:main"
@@ -33,4 +33,4 @@ version = {attr = "firemedia.__version__"}
 include = ["firemedia*"]
 
 [tool.setuptools.package-data]
-firemedia = ["assets/*.svg", "assets/*.png"]
+firemedia = ["assets/*.svg", "assets/*.png", "update_keys.json"]

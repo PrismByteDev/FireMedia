@@ -244,6 +244,11 @@ class Window(QMainWindow):
         self.overlay_timer=QTimer(self);self.overlay_timer.setInterval(80)
         self.overlay_timer.timeout.connect(self.update_control_visibility);self.overlay_timer.start()
         self.update_transport_layout()
+        from .updateui import UpdateManager
+        from .wakelock import WakeLock
+        self.keep_awake=self.state.get('keep_awake',True)
+        self.wake=WakeLock(self)
+        self.updates=UpdateManager(self,active=not silent)
 
     def _build_ui(self):
         root = ThemeSurface('window');self.setCentralWidget(root)
@@ -492,6 +497,12 @@ class Window(QMainWindow):
             self.play_index(self.current_index())
         else: self.player.set('pause',self.player.get('pause')!='yes')
 
+    def resume_after_update(self,resume):
+        self._update_resume=resume
+        index=next((i for i,t in enumerate(self.queue) if t.source==resume.get('source')),-1)
+        if index>=0:self.play_index(index)
+        else:self.add_sources([resume['source']])
+
     def current_index(self):
         return next((i for i,t in enumerate(self.queue) if t is self.current),-1)
 
@@ -716,6 +727,9 @@ class Window(QMainWindow):
         autoload.toggled.connect(lambda v:(setattr(self,'autoload_subtitles',v),self.schedule_save()));form.addRow(autoload)
         plugins=QPushButton('Manage plugins…');plugins.clicked.connect(self.show_plugins);form.addRow('Plugins',plugins)
         visual=QPushButton('Presets, background, images…');visual.clicked.connect(self.show_visual_settings);form.addRow('Visualizer',visual)
+        awake=QCheckBox('Prevent sleep during playback (keep the screen on for videos)');awake.setChecked(self.keep_awake)
+        awake.toggled.connect(lambda value:(setattr(self,'keep_awake',value),self.sync(),self.schedule_save()));form.addRow(awake)
+        self.updates.add_settings(form,dialog)
         profile=QLabel('System profile: '+(self.power_profile or 'not available (Auto uses full detail)'));form.addRow(profile)
         dialog.exec()
 
@@ -991,6 +1005,12 @@ class Window(QMainWindow):
             self._video=video;self.stage_stack.setCurrentWidget(self.video if video else self.visual)
             self.visual.setVisible(not video and not (self.low_detail and not self._was_active))
             self.transport.raise_();self.update_control_visibility()
+        if hasattr(self,'wake'):self.wake.update(playing and self.keep_awake and not self._silent,video)
+        resume=getattr(self,'_update_resume',None)
+        if resume and self.player.loaded and self.current and self.current.source==resume.get('source'):
+            self._update_resume=None
+            self.player.command('seek',max(0,float(resume.get('position',0))),'absolute')
+            self.player.set('pause',bool(resume.get('paused',False)))
         self.visual.paused=not playing
         playback=(playing,self.player.loaded)
         if playback!=getattr(self,'_plugin_playback',None):
@@ -1101,7 +1121,7 @@ class Window(QMainWindow):
 
     def persist(self):
         state={'queue':[asdict(t) for t in self.queue],'playlists':self.saved,'shuffle':self.shuffle_mode,
-               'loop':self.loop_mode,'ldm':self.ldm,'volume':self.volume.value(),'eq':self.gains,
+               'loop':self.loop_mode,'ldm':self.ldm,'volume':self.volume.value(),'eq':self.gains,'keep_awake':self.keep_awake,
                'bar_count':self.visual.bar_count,'physics':self.visual.physics,'tension':self.visual.tension,'intensity':self.visual.intensity,
                'preset':self.visual.preset,'color':self.visual.color,'subtitle_style':self.subtitle_style,
                'visual_spec':self.visual.spec,'visual_presets':self.visual_presets,
@@ -1114,6 +1134,7 @@ class Window(QMainWindow):
 
     def closeEvent(self,event):
         self._closing=True
+        self.updates.close();self.wake.release()
         self.save_timer.stop();self.overlay_timer.stop();self.power_timer.stop();self.visual.timer.stop();self.subtitle_overlay.timer.stop()
         self.player.timer.stop()
         self.persist();self.plugins.close();self.covers.close();self.mpris.close();self.analysis.stop();

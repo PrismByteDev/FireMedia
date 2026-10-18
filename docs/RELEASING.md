@@ -61,7 +61,7 @@ checks automatically; this manual option adds the Windows ZIP and installer.
 
 When the run succeeds, open its summary and download **linux-build** or
 **windows-build** from **Artifacts**. Sign in to GitHub to download artifacts.
-The Windows artifact contains the portable ZIP and setup EXE; extract the artifact
+The **appimage-build** artifact contains the Linux AppImage. The Windows artifact contains the portable ZIP and setup EXE; extract the artifact
 first, then extract the portable ZIP and run `FireMedia/FireMedia.exe`, or run the
 installer. Artifacts expire after one day, so download them promptly or run a new
 build. A CI artifact is a test build; reviewed releases belong on Releases.
@@ -74,7 +74,7 @@ so a blocked GUI test cannot consume the full job timeout without diagnostics.
 
 ## Version and release assets
 
-The single application version is `firemedia.__version__`, currently `0.2.0`.
+The single application version is `firemedia.__version__`, currently `0.3.0`.
 Setuptools, `.deb`, installer builds, and release assembly consume it. Stable
 tags are `vX.Y.Z`. Preview tags may use Python suffixes such as `v0.3.0rc1`;
 the draft is marked prerelease. The workflow fails if the tag and code differ.
@@ -86,12 +86,14 @@ The draft includes:
 | `firemedia_X.Y.Z_all.deb` | Debian/Ubuntu dependency-based package |
 | `FireMedia-X.Y.Z-windows-x64.zip` | Complete Windows portable folder |
 | `FireMedia-X.Y.Z-windows-x64-setup.exe` | Per-user installer |
+| `FireMedia-X.Y.Z-x86_64.AppImage` | Linux portable image with signed automatic updates |
 | `FireMedia-X.Y.Z-source.zip` | FireMedia source, docs, build scripts, and licenses |
 | `release-info.json` | Version/platform/size/hash/URL inventory; not a signed update feed |
+| `update.json` | Authenticated stable update metadata (requires signing secret) |
 | `SHA256SUMS` | SHA-256 hashes of all other attached files |
 
 Python wheel/sdist builds are retained in the Linux workflow artifact. They are
-not automatically uploaded to PyPI. There is no macOS or AppImage release job.
+not automatically uploaded to PyPI. There is no macOS release job.
 Flatpak preparation is tracked [separately](../packaging/flatpak/README.md).
 
 Before tagging, update CHANGELOG, run tests, and run the real desktop playback
@@ -100,7 +102,7 @@ release run needs an existing tag. Never move a published version tag.
 
 ## Review before publishing the draft
 
-Verify both build jobs succeeded and download/test the actual packaged builds.
+Verify all three build jobs succeeded and download/test the actual packaged builds.
 Check song/video playback, seek, pause/resume, cover/subtitle loading, playlist
 formats, presets, restart persistence, resize, and minimized effects. Verify
 the checksum file against the downloaded assets. Windows smart-screen/publisher
@@ -116,9 +118,9 @@ exact builds before distributing binaries. Linux `.deb` dependencies come from
 the distribution rather than being bundled by FireMedia.
 
 Then publish the reviewed draft from GitHub. Consider enabling immutable releases
-after attaching the complete reviewed asset set. This preparation does not create
-signing keys or enable automatic installation. Implement the requested update
-modes according to [UPDATES.md](UPDATES.md) before exposing them in Settings.
+after attaching the complete reviewed asset set. Configure the explicitly approved FIREMEDIA_UPDATE_SIGNING_KEY secret before
+releasing. Only published stable signed releases are used for automatic updates.
+See [UPDATES.md](UPDATES.md) for testing and key-backup requirements.
 
 References: [Actions security](https://docs.github.com/en/actions/reference/security/secure-use),
 [Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions),

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — 0.3.0 updates and packaging
+
+- Signed update discovery, ten-minute checks, native notifications, and update settings.
+- Windows version folders, opt-in scheduled background updates, restart/resume,
+  installer update choices, and optional Open With registration.
+- AppImage packaging, atomic updates with a retained previous image, optional
+  systemd user timer, and first-run desktop/media registration.
+- Flatpak notifications based on Flathub publication; portable/source builds only notify.
+- Playback wake locks on Windows/Linux, released on pause/stop/close.
+- Release signing requires the maintainer-approved GitHub signing secret;
+  real two-version desktop upgrade validation remains required before publication.
+
 ## Unreleased — 0.2.0 public preview preparation
 
 - Native Qt/libmpv audio/video player with a collapsible effects menu and playlist.

@@ -44,7 +44,7 @@ Section: sound
 Priority: optional
 Architecture: all
 Maintainer: FireMedia contributors <firemedia@localhost>
-Depends: python3 (>= 3.10), python3-pyqt6 (>= 6.6), python3-numpy, libmpv2, ffmpeg, libseccomp2
+Depends: python3 (>= 3.10), python3-pyqt6 (>= 6.6), python3-numpy, python3-cryptography, libmpv2, ffmpeg, libseccomp2
 Description: Native Qt media player with music fireworks
  Audio and video playback, physics-driven visualization, playlists,
  equalization, and customizable art subtitles.

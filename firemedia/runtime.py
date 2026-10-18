@@ -39,6 +39,10 @@ def load_mpv():
         if not library:
             raise OSError('libmpv is missing. Use the complete FireMedia Windows folder, including its playback DLLs.')
     else:
+        for directory in runtime_directories():
+            for name in ('libmpv.so.2','libmpv.so.1','libmpv.so'):
+                candidate=directory/name
+                if candidate.is_file():return ctypes.CDLL(str(candidate))
         library = ctypes.util.find_library('mpv')
         if not library:
             raise OSError('libmpv is missing. Install libmpv2 (Debian/Ubuntu) or mpv-libs (Fedora).')

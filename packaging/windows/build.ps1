@@ -26,6 +26,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Could not record build dependency versions.' }
     Compress-Archive -Path 'dist/FireMedia' -DestinationPath 'dist/FireMedia-windows-x64.zip' -Force
     if ($Installer) {
+        & $python -m PyInstaller --noconfirm --clean packaging/windows/Updater.spec
+        if ($LASTEXITCODE -ne 0) { throw 'Update helper packaging failed.' }
         $compiler = Get-Command ISCC.exe -ErrorAction SilentlyContinue
         $iscc = if ($compiler) { $compiler.Source } else { Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe' }
         if (-not (Test-Path $iscc)) { throw 'Install Inno Setup 6 to build the installer.' }

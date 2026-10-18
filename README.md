@@ -12,7 +12,7 @@ collapsible effects row and a resizable playlist drawer below the controls.
 
 ## Run
 
-For an installed app with an application-menu entry, build the Debian/Ubuntu package with `python3 packaging/linux/build-deb.py`, then install `dist/firemedia_0.2.0_all.deb` using APT. Windows portable-app and installer recipes are included. See [desktop packaging instructions](packaging/README.md).
+For an installed app with an application-menu entry, build the Debian/Ubuntu package with `python3 packaging/linux/build-deb.py`, then install `dist/firemedia_0.3.0_all.deb` using APT. Windows portable-app and installer recipes are included. See [desktop packaging instructions](packaging/README.md).
 
 With the required dependencies installed:
 
@@ -34,11 +34,13 @@ Development: [contributing](CONTRIBUTING.md), [security reporting](SECURITY.md),
 CI tests Linux changes; manual/tag builds also prepare Windows packages and
 versioned draft releases with source and checksums.
 
-Automatic updates are **planned, not enabled**. The [update design](docs/UPDATES.md)
-records four Windows installer modes, portable notifications, native Windows
-notifications, and Linux notifications with updates through Flathub/the software
-manager. [Flathub packaging](packaging/flatpak/README.md) is being prepared;
-there is no published Flatpak listing yet.
+Windows installer and AppImage builds support signed automatic updates, including
+opt-in background checks. Portable Windows and Flatpak builds only notify.
+Settings also offers a playback wake lock (audio prevents sleep; video keeps the
+screen on). See [update behavior and publishing setup](docs/UPDATES.md).
+The release signing secret must be configured before automatic-update releases
+can be published. [Flathub packaging](packaging/flatpak/README.md) is still being
+prepared; there is no published Flatpak listing yet.
 
 ## Controls and layout
 

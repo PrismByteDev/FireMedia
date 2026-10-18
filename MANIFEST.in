@@ -1,8 +1,10 @@
 include LICENSE README.md CONTRIBUTING.md SECURITY.md CHANGELOG.md
 include firemedia.desktop run.sh BUILD-WINDOWS.cmd
 recursive-include firemedia/assets *.svg *.png
+include firemedia/update_keys.json
 recursive-include docs *.md
 recursive-include packaging *.py *.ps1 *.spec *.iss *.md *.txt
+recursive-include packaging/windows *.json
 recursive-include packaging/flatpak *.xml
 recursive-include tools *.py
 recursive-include tests *.py

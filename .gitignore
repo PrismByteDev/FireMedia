@@ -33,3 +33,4 @@ release-output/
 *.iso
 *.firempl
 art/
+.signing/

@@ -17,7 +17,8 @@ analysis = Analysis([str(root / 'packaging' / 'launch.py')], pathex=[str(root)],
     datas=[(str(root / 'firemedia' / 'assets'), 'firemedia/assets'),
            (str(root / 'LICENSE'), '.'), (str(root / 'docs'), 'docs'),
            (str(vendor / 'licenses'), 'licenses/playback')]
-          + copy_metadata('PyQt6', recursive=True) + copy_metadata('numpy'),
+          + [(str(root / 'firemedia' / 'update_keys.json'), 'firemedia')]
+          + copy_metadata('PyQt6', recursive=True) + copy_metadata('numpy') + copy_metadata('cryptography', recursive=True),
     hiddenimports=[], excludes=['PyQt6.QtDBus', 'firemedia.mpris'], noarchive=False)
 pyz = PYZ(analysis.pure)
 exe = EXE(pyz, analysis.scripts, [], exclude_binaries=True, name='FireMedia',
