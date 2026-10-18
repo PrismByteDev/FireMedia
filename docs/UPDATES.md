@@ -32,8 +32,9 @@ The file and its containing directory must be writable and support hard links.
 Moving an integrated AppImage requires rerunning setup/settings so its desktop
 entry and background timer use the new path. Turning Background off removes its
 user timer. Windows uninstall removes its task. Before manually deleting an
-AppImage, switch its update mode away from Background. Unattended checks do not
-run after logout and never install a system-wide service.
+AppImage, switch its update mode away from Background. Windows checks stop after
+logout. The AppImage timer follows the systemd user manager's lifetime (including
+any user-enabled lingering); it never installs a system-wide service.
 
 Flatpak checks Flathub appstream releases, rather than assuming a GitHub release
 is already on Flathub. Notifications use the desktop portal. There is currently

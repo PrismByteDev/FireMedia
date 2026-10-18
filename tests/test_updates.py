@@ -114,8 +114,8 @@ class UpdateTests(unittest.TestCase):
             with patch('firemedia.update_worker.helper_root') as root:
                 self.assertEqual(main(argv),1);root.assert_not_called()
     def test_systemd_exec_escaping(self):
-        text=systemd_quote('/tmp/100% "media"/FireMedia.AppImage')
-        self.assertIn('100%%',text);self.assertIn('\\"media\\"',text);self.assertTrue(text.startswith('"'))
+        text=systemd_quote('/tmp/100% "$media"/FireMedia.AppImage')
+        self.assertIn('100%%',text);self.assertIn('\\"$$media\\"',text);self.assertTrue(text.startswith('"'))
     def test_publishing_signs_the_exact_platform_inventory_and_checksum(self):
         from tools.sign_updates import sign_release
         output=self.root/'release';output.mkdir()

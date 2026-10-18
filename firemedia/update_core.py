@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import stat
+import ssl
 import sys
 import tempfile
 import time
@@ -93,7 +94,13 @@ def fetch(url, *, limit=256 * 1024, etag=None, destination=None, expected_size=N
     if not allowed_url(url): raise ValueError('Unapproved update URL')
     headers = {'User-Agent': 'FireMedia-Updater/1', 'Accept': 'application/json' if destination is None else 'application/octet-stream'}
     if etag: headers['If-None-Match'] = etag
-    opener = urllib.request.build_opener(SafeRedirect)
+    context=ssl.create_default_context()
+    # Frozen Python can inherit its build host's OpenSSL certificate path.
+    # Use the target distro's trust store rather than disabling TLS validation.
+    if not context.get_ca_certs():
+        for store in ('/etc/ssl/certs/ca-certificates.crt','/etc/pki/tls/certs/ca-bundle.crt','/etc/ssl/cert.pem'):
+            if Path(store).is_file():context.load_verify_locations(store);break
+    opener = urllib.request.build_opener(SafeRedirect,urllib.request.HTTPSHandler(context=context))
     try: response = opener.open(urllib.request.Request(url, headers=headers), timeout=20)
     except urllib.error.HTTPError as error:
         if error.code == 304: return None, etag

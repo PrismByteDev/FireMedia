@@ -38,6 +38,7 @@ def check(config, kind, target, running=__version__, *, force=False, install=Fal
             action = 'restart' if status == 'installed' else 'install' if kind in ('windows', 'appimage') else 'view'
             message = (f'FireMedia {release} is installed. Restart FireMedia to use it.' if status == 'installed'
                        else f'FireMedia {release} is available.' + (' Choose Update to install it.' if action == 'install' else ' Open Releases to download it.'))
+            if kind=='appimage' and status=='available':message=f'FireMedia {release} is available. Open FireMedia Settings → Updates to install it.'
             delivered = native_notification('FireMedia update', message, action if sys.platform == 'win32' else 'view')
             if delivered: state['notified'] = marker
         atomic_json(config, state)
@@ -53,7 +54,7 @@ def check_flatpak(config, running, force):
     state['checked'] = time.time(); atomic_json(config, state)
     raw, _ = fetch(f'https://flathub.org/api/v2/appstream/{APP_ID}', limit=512 * 1024)
     metadata = json.loads(raw)
-    candidates = [str(r.get('version', '')) for r in metadata.get('releases', []) if isinstance(r, dict)]
+    candidates = [str(r.get('version', '')) for r in metadata.get('releases', []) if isinstance(r, dict) and r.get('type','stable')=='stable']
     candidates = [v for v in candidates if _stable_newer(v, running)]
     if not candidates: return {'status': 'current', 'message': 'No newer Flathub version available.'}
     release = max(candidates, key=version)

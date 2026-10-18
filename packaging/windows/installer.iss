@@ -59,6 +59,17 @@ Root: HKCU; Subkey: "Software\Classes\.webm\OpenWithProgids"; ValueType: string;
 Root: HKCU; Subkey: "Software\Classes\.m3u\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
 Root: HKCU; Subkey: "Software\Classes\.m3u8\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
 
+Root: HKCU; Subkey: "Software\Classes\.opus\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.m4a\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.aac\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.wma\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.mov\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.avi\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.m4v\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.ts\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.mpeg\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.mpg\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+
 [Run]
 Filename: "{app}\FireMedia.exe"; Parameters: "launch"; Description: "Launch FireMedia"; Flags: nowait postinstall skipifsilent
 
@@ -72,6 +83,7 @@ Type: files; Name: "{app}\current.json"
 [Code]
 var UpdatesPage: TInputOptionWizardPage;
 procedure InitializeWizard;
+var ConfigData: AnsiString; Existing: String;
 begin
   UpdatesPage := CreateInputOptionPage(wpSelectTasks, 'FireMedia updates',
     'Choose how FireMedia checks for updates',
@@ -81,6 +93,13 @@ begin
   UpdatesPage.Add('Notify me before updating');
   UpdatesPage.Add('Disabled');
   UpdatesPage.SelectedValueIndex := 2;
+  if LoadStringFromFile(ExpandConstant('{userappdata}\FireMedia\FireMedia\updates.json'), ConfigData) then begin
+    Existing := String(ConfigData);
+    StringChangeEx(Existing, ' ', '', True);
+    if Pos('"mode":"background"', Existing) > 0 then UpdatesPage.SelectedValueIndex := 0
+    else if Pos('"mode":"launch"', Existing) > 0 then UpdatesPage.SelectedValueIndex := 1
+    else if Pos('"mode":"disabled"', Existing) > 0 then UpdatesPage.SelectedValueIndex := 3;
+  end;
 end;
 procedure CurStepChanged(CurStep: TSetupStep);
 var Code: Integer; Mode, Params: String;

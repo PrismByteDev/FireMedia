@@ -30,14 +30,13 @@ def run(args, **kwargs):
 def background_supported(kind):
     if kind == 'windows': return True
     if kind != 'appimage': return False
-    try:
-        run(['systemctl', '--user', 'show-environment'])
-        return True
-    except (OSError, subprocess.SubprocessError): return False
+    import shutil
+    runtime=Path(os.environ.get('XDG_RUNTIME_DIR',f'/run/user/{os.getuid()}'))
+    return bool(shutil.which('systemctl') and (runtime/'systemd/private').exists())
 
 
 def systemd_quote(value):
-    return '"' + str(value).replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%').replace('\n', '\\n').replace('\r', '\\r') + '"'
+    return '"' + str(value).replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%').replace('$', '$$').replace('\n', '\\n').replace('\r', '\\r') + '"'
 
 
 def configure_background(kind, target, enabled, config=None):

@@ -15,6 +15,7 @@ from .update_core import (AUTO_MODES, MODES, INTERVAL, RELEASES, atomic_json, cu
                           package_kind, read_json, update_lock, version)
 from .update_platform import configure_background, background_supported, appimage_desktop
 from .update_worker import check
+from PyQt6 import sip
 
 LABELS = {'background': 'Background updates', 'launch': 'Update on launch', 'notify': 'Notify me', 'disabled': 'Disabled'}
 
@@ -146,7 +147,10 @@ class UpdateManager(QObject):
             mode.blockSignals(True);mode.setCurrentIndex(max(0,mode.findData(self.mode)));mode.blockSignals(False)
             update.setVisible(self.kind in ('windows', 'appimage') and self.result.get('status') == 'available'); update.setEnabled(not self.busy)
             restart.setVisible(self.result.get('status') == 'installed')
-        self.changed.connect(refresh); dialog.finished.connect(lambda: self.changed.disconnect(refresh)); refresh()
+        def disconnect():
+            try:self.changed.disconnect(refresh)
+            except (RuntimeError,TypeError):pass
+        self.changed.connect(refresh); dialog.finished.connect(disconnect); refresh()
         info = QLabel('Background updates run every ten minutes while signed in. Notify never installs without your choice.' if self.kind in ('windows', 'appimage')
                       else 'Updates are installed through your software manager or the release download. FireMedia only notifies you.')
         info.setWordWrap(True); form.addRow(info)
@@ -157,7 +161,8 @@ class UpdateManager(QObject):
         dialog,form=self.window.dialog('FireMedia updates')
         self.add_settings(form,dialog)
         try:dialog.exec()
-        finally:dialog.deleteLater()
+        finally:
+            if not sip.isdeleted(dialog):dialog.deleteLater()
 
     def setup_appimage(self):
         if self.closed: return
