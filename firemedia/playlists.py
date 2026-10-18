@@ -102,7 +102,8 @@ def write_playlist(path, tracks, relative=False):
         if not source_scheme(source):
             source = str(Path(source).expanduser().resolve())
             if relative:
-                try: source = os.path.relpath(source, path.parent)
+                # Forward slashes keep relative M3U files portable across OSes.
+                try: source = Path(os.path.relpath(source, path.parent)).as_posix()
                 except ValueError: pass  # Different Windows drives need absolute paths.
         source = source.replace('\r', '').replace('\n', '')
         title = track.title.replace('\r', ' ').replace('\n', ' ')

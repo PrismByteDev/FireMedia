@@ -31,13 +31,13 @@ jobs:
       - name: Install native playback and test dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libmpv2 ffmpeg libseccomp2 dbus-x11 libglib2.0-bin libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-render-util0 xvfb xauth
+          sudo apt-get install -y --no-install-recommends libmpv2 ffmpeg libseccomp2 dbus-x11 libglib2.0-bin libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-render-util0 xvfb xauth gdb
           python -m pip install -c packaging/constraints.txt . build
       - name: Test in an isolated session bus
         env:
           FIREMEDIA_TEST_DBUS: '1'
         run: |
-          xvfb-run -a dbus-run-session -- timeout 90s python -u -c "import faulthandler, unittest; faulthandler.dump_traceback_later(25, repeat=True); unittest.main(module=None, argv=['unittest', 'discover', '-s', 'tests', '-v'])"
+          xvfb-run -a dbus-run-session -- timeout --signal=INT --kill-after=15s 60s gdb --batch --return-child-result -ex 'set debuginfod enabled off' -ex 'handle SIGPIPE nostop noprint pass' -ex run -ex 'thread apply all bt' --args python -u -m unittest discover -s tests -v
       - name: Build Linux and Python packages
         run: |
           python packaging/linux/build-deb.py
@@ -86,12 +86,14 @@ jobs:
       - name: Test portable core and packaged startup
         shell: pwsh
         run: |
+          $failedSuites = @()
           foreach ($suite in @('test_core.py','test_formats.py','test_runtime.py','test_analysis.py','test_release.py')) {
             & ./.venv-build/Scripts/python.exe -m unittest discover -s tests -p $suite -v
-            if ($LASTEXITCODE -ne 0) { throw "Test failed: $suite" }
+            if ($LASTEXITCODE -ne 0) { $failedSuites += $suite }
           }
           $process = Start-Process ./dist/FireMedia/FireMedia.exe -ArgumentList '--help' -PassThru -Wait
           if ($process.ExitCode -ne 0) { throw 'Packaged app startup failed.' }
+          if ($failedSuites.Count) { throw "Tests failed: $($failedSuites -join ', ')" }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-build
