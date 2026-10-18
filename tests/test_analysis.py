@@ -29,8 +29,17 @@ class AnalysisClockTests(unittest.TestCase):
         self.analysis=AudioAnalysis()
     def tearDown(self):
         self.analysis.stop()
-        if self.analysis.worker: self.analysis.worker.join(timeout=2)
-        self.temp.cleanup()
+        if self.analysis.worker:
+            self.analysis.worker.join(timeout=2)
+            self.assertFalse(self.analysis.worker.is_alive(),'Decoder must stop before removing its input')
+        # Windows can briefly retain a sharing lock after decoder termination
+        # (including antivirus/indexer access). Retry, but never ignore a leak.
+        deadline=time.monotonic()+2
+        while True:
+            try:self.temp.cleanup();break
+            except PermissionError:
+                if time.monotonic()>=deadline:raise
+                time.sleep(.05)
     def wait_frame(self, position):
         def ready():
             with self.analysis.condition:
