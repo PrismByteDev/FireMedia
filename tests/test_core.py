@@ -8,7 +8,8 @@ from firemedia.order import PlaybackOrder
 
 class PlaylistTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
+        # Windows may return an 8.3 alias for TEMP; production normalizes paths.
+        self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name).resolve()
     def tearDown(self): self.temp.cleanup()
     def test_utf8_bom_relative_and_url(self):
         p=self.root/'mix.m3u8'

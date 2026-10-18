@@ -5,7 +5,7 @@ from firemedia.formats import (BUILTIN_PRESETS,subtitle_spec,export_subtitle,imp
 from firemedia.playlists import Track
 
 class FormatTests(unittest.TestCase):
-    def setUp(self):self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
+    def setUp(self):self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name).resolve()
     def tearDown(self):self.temp.cleanup()
     def test_subtitle_preset_roundtrip(self):
         spec=dict(BUILTIN_PRESETS['Glow'],font='Serif',delay=1.25,particles=True,stroke_color='#123456')

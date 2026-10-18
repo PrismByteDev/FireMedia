@@ -1,8 +1,8 @@
 # GitHub preparation and releases
 
-Intended public repository: **PrismByteDev/FireMedia**. No repository, remote,
-release, updater task, or Flathub submission is created merely by these files.
-The scripts produce local builds; GitHub workflows run after the repo is pushed.
+Public repository: [PrismByteDev/FireMedia](https://github.com/PrismByteDev/FireMedia).
+GitHub Actions builds the committed source. Updates and Flathub publication remain
+separate work; building a package does not enable an updater or publish a release.
 
 ## First push
 
@@ -36,8 +36,8 @@ PR code runs with a write token or release credentials.
 ## What the workflows do
 
 - **CI:** Linux tests/builds on main pushes and pull requests. Manual runs can
-  also build Windows. Linux tests use an isolated D-Bus session and offscreen
-  Qt. Real GPU/desktop rendering is a separate check.
+  also build Windows. Linux tests use an isolated D-Bus session and a virtual
+  X11 display. Real GPU/desktop rendering is a separate check.
 - **Build and test:** reusable Linux/Windows workflow. Windows builds a portable
   ZIP and a per-user Inno Setup installer, then runs portable core tests and a
   packaged-startup smoke check. This is not a substitute for desktop playback.
@@ -51,6 +51,25 @@ after one day and completed duplicate CI runs are canceled. Build minutes are
 free for public repos on standard runners; artifact storage still has an
 allowance. Check organization storage/budgets before retaining many builds.
 No paid larger runners or private signing service is configured.
+
+## Run a build and download it
+
+Open **Actions → CI → Run workflow**, select `main`, leave **Also build and test
+the Windows packages** checked, and run it. Pushes and pull requests run Linux
+checks automatically; this manual option adds the Windows ZIP and installer.
+
+When the run succeeds, open its summary and download **linux-build** or
+**windows-build** from **Artifacts**. Sign in to GitHub to download artifacts.
+The Windows artifact contains the portable ZIP and setup EXE; extract the artifact
+first, then extract the portable ZIP and run `FireMedia/FireMedia.exe`, or run the
+installer. Artifacts expire after one day, so download them promptly or run a new
+build. A CI artifact is a test build; reviewed releases belong on Releases.
+
+Windows dependency lookup uses the job's read-only GitHub token to avoid shared
+runner API limits. That token is sent only to the GitHub API, never to binary
+download hosts. Local builds also work without it, subject to public API limits.
+Linux tests print periodic stack traces if they stall and have a hard timeout,
+so a blocked GUI test cannot consume the full job timeout without diagnostics.
 
 ## Version and release assets
 
