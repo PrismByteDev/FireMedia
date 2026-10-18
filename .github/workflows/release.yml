@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing version tag matching firemedia.__version__ (for example v0.2.0)
+        description: Existing version tag matching the app version or an explicitly supported release alias
         type: string
         required: true
 

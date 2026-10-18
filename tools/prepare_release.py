@@ -10,10 +10,13 @@ import sys
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from firemedia import __version__
+from firemedia.update_core import RELEASE_ALIASES
 from tools.build_source import build_source
 
 
 def validate_tag(tag,version=__version__):
+    if RELEASE_ALIASES.get(tag) == version:
+        return False
     if not re.fullmatch(r'\d+\.\d+\.\d+(?:(?:a|b|rc)\d+)?',version) or tag!='v'+version:
         raise ValueError(f'Tag must match the app version: v{version}')
     return bool(re.search(r'(?:a|b|rc)\d+$',version))

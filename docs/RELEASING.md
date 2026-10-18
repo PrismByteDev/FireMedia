@@ -86,6 +86,13 @@ Setuptools, `.deb`, installer builds, and release assembly consume it. Stable
 tags are `vX.Y.Z`. Preview tags may use Python suffixes such as `v0.3.0rc1`;
 the draft is marked prerelease. The workflow fails if the tag and code differ.
 
+For the first public main release, **vBETA.0.0** is explicitly bound to package
+version **0.3.0**. It is a normal/latest GitHub release by maintainer choice;
+asset filenames and installer versions retain `0.3.0`. The updater verifies
+this exact alias and signed download URLs. Other arbitrary tag/version mismatches
+remain rejected. Beta/Canary channel selection is planned, not yet available;
+see [UPDATES.md](UPDATES.md#planned-release-channels).
+
 The draft includes:
 
 | Asset | Purpose |

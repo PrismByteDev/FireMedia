@@ -18,6 +18,9 @@ from urllib.parse import urlsplit
 from zipfile import ZipFile
 
 REPOSITORY = 'PrismByteDev/FireMedia'
+# Public release labels can differ from the numeric package version only when
+# explicitly bound here. Update ordering always uses the package version.
+RELEASE_ALIASES = {'vBETA.0.0': '0.3.0'}
 RELEASES = f'https://github.com/{REPOSITORY}/releases/latest'
 FEED = RELEASES + '/download/update.json'
 APP_ID = 'io.github.PrismByteDev.FireMedia'
@@ -144,6 +147,9 @@ def verify_manifest(envelope, *, keys=None, now=None, minimum_sequence=0):
         raise ValueError('Update is for a different repository/channel/updater')
     release = payload.get('version'); parsed = version(release)
     if parsed[3] != 3: raise ValueError('Prerelease ignored by stable updater')
+    tag = payload.get('tag', 'v' + release)
+    if not isinstance(tag, str) or (tag != 'v' + release and RELEASE_ALIASES.get(tag) != release):
+        raise ValueError('Update tag does not match its package version')
     for field in ('issued', 'expires', 'sequence'):
         if type(payload.get(field)) is not int: raise ValueError('Invalid update timestamp/sequence')
     if not payload['issued'] <= now + 300 < payload['expires'] or payload['expires'] - payload['issued'] > 370 * 86400:
@@ -153,7 +159,7 @@ def verify_manifest(envelope, *, keys=None, now=None, minimum_sequence=0):
     for platform, asset in payload['assets'].items():
         if platform not in ('windows-x64', 'appimage-x64') or not isinstance(asset, dict): raise ValueError('Unknown update platform')
         filename = f'FireMedia-{release}-windows-x64.zip' if platform == 'windows-x64' else f'FireMedia-{release}-x86_64.AppImage'
-        if asset.get('url') != f'https://github.com/{REPOSITORY}/releases/download/v{release}/{filename}': raise ValueError('Wrong update asset identity')
+        if asset.get('url') != f'https://github.com/{REPOSITORY}/releases/download/{tag}/{filename}': raise ValueError('Wrong update asset identity')
         if type(asset.get('size')) is not int or not 0 < asset['size'] <= MAX_PACKAGE: raise ValueError('Invalid package size')
         if not re.fullmatch('[a-f0-9]{64}', str(asset.get('sha256'))): raise ValueError('Invalid package hash')
     return payload

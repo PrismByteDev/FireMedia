@@ -31,6 +31,8 @@ class ReleaseTests(unittest.TestCase):
     def test_release_tag_must_match_current_version(self):
         self.assertFalse(validate_tag('v'+__version__))
         self.assertTrue(validate_tag('v0.3.0rc1','0.3.0rc1'))
+        self.assertFalse(validate_tag('vBETA.0.0','0.3.0'))
+        with self.assertRaises(ValueError):validate_tag('vBETA.0.0','0.3.1')
         for tag in ('main','v999.0.0','../bad','v'+__version__+'; echo bad'):
             with self.assertRaises(ValueError):validate_tag(tag)
     def test_release_inventory_hashes_match_every_packaged_asset(self):

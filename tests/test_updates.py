@@ -52,6 +52,16 @@ class UpdateTests(unittest.TestCase):
         self.assertLess(version('1.0.0rc2'),version('1.0.0'));self.assertLess(version('1.0.0a1'),version('1.0.0b1'))
         for bad in ('../app','v1.0.0','1.0.0;echo','1.0'):
             with self.assertRaises(ValueError):version(bad)
+    def test_release_alias_is_bound_to_version_and_exact_download_urls(self):
+        p=deepcopy(self.payload);p.update(version='0.3.0',tag='vBETA.0.0')
+        for asset in p['assets'].values():
+            asset['url']=asset['url'].replace('/v1.2.3/','/vBETA.0.0/').replace('FireMedia-1.2.3-','FireMedia-0.3.0-')
+        self.assertEqual(verify_manifest(self.sign(p),keys=self.keys),p)
+        for change in ({'version':'0.3.1'},{'tag':'main'},{'tag':'../vBETA.0.0'},{'tag':[]}):
+            with self.subTest(change=change),self.assertRaises(ValueError):
+                verify_manifest(self.sign(dict(p,**change)),keys=self.keys)
+        p['assets']['windows-x64']['url']=p['assets']['windows-x64']['url'].replace('/vBETA.0.0/','/v0.3.0/')
+        with self.assertRaises(ValueError):verify_manifest(self.sign(p),keys=self.keys)
     def test_disabled_makes_no_discovery_or_download_requests(self):
         atomic_json(self.config,{'mode':'disabled'})
         with patch('firemedia.update_worker.discover') as discover:

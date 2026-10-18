@@ -22,7 +22,8 @@ def sign_release(directory, private_key, now=None):
     if set(assets)!={'windows-x64','appimage-x64'}:raise ValueError('Both automatic update packages are required')
     now=int(time.time() if now is None else now)
     payload={'format':'FireMediaUpdate','schema':1,'repository':REPOSITORY,'channel':'stable',
-             'version':inventory['version'],'issued':now,'expires':now+365*86400,
+             'version':inventory['version'],'tag':inventory.get('tag', 'v' + inventory['version']),
+             'issued':now,'expires':now+365*86400,
              'sequence':now,'min_updater':1,'assets':assets}
     key=serialization.load_pem_private_key(private_key,password=None)
     if not isinstance(key,Ed25519PrivateKey):raise ValueError('An Ed25519 signing key is required')

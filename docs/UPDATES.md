@@ -5,6 +5,23 @@ no updater: install a new build once to receive future updates. A published stab
 release must contain a valid `update.json` signed with FireMedia's publishing key.
 Drafts and prereleases never trigger stable automatic installation.
 
+The initial main release is named **vBETA.0.0**, with numeric package version
+**0.3.0**. This explicit release-label alias is included in signed metadata;
+version comparisons still use the numeric package version.
+
+## Planned release channels
+
+The intended update tracks are **Beta** (regular preview releases) and
+**Canary** (experimental builds). A future channel selector in Updates settings
+will let users opt into either track. The selector and channel-specific feeds
+are not implemented in this release: the current updater follows the main/latest
+signed release only. Canary builds must not enter the Beta feed automatically.
+Channel support must cover in-app checks and background tasks, authenticate the
+selected channel, isolate cached metadata/replay counters per channel, and
+define version ordering and switching behavior before publication begins.
+Switching tracks must not silently downgrade an installed build. Flatpak channel
+availability will depend on the distribution's published branches.
+
 ## Platforms and modes
 
 Choose **Settings → Updates**. Notify is the default; unattended installation is
@@ -83,7 +100,7 @@ release/download provider. Avoid editing update files while an updater runs.
 
 `release-info.json` and SHA256SUMS are inventories; they do not authorize automatic
 installation. `update.json` is an Ed25519-signed canonical JSON envelope containing
-repository, stable channel, version, issuance/expiry, sequence, minimum updater,
+repository, stable channel, version, release tag, issuance/expiry, sequence, minimum updater,
 and exact platform package URLs/sizes/SHA-256 hashes. The embedded public key is
 `firemedia/update_keys.json`. Private keys must never be committed or distributed.
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — 0.3.0 updates and packaging
+## vBETA.0.0 — 2026-10-17 (package 0.3.0)
 
 - Signed update discovery, ten-minute checks, native notifications, and update settings.
 - Windows version folders, opt-in scheduled background updates, restart/resume,
@@ -9,8 +9,12 @@
   systemd user timer, and first-run desktop/media registration.
 - Flatpak notifications based on Flathub publication; portable/source builds only notify.
 - Playback wake locks on Windows/Linux, released on pause/stop/close.
-- Release signing requires the maintainer-approved GitHub signing secret;
-  real two-version desktop upgrade validation remains required before publication.
+- Separate Windows installer and portable downloads, AppImage, Debian package,
+  source archive, checksums, and signed update metadata.
+- Beta/Canary channel selection is planned; this build follows main/latest.
+- CI covers package startup, installer integration, update verification and
+  atomic replacement. Native notification clicks and a full two-version desktop
+  upgrade remain manual validation gaps.
 
 ## Unreleased — 0.2.0 public preview preparation
 
