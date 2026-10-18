@@ -49,15 +49,15 @@ Root: HKCU; Subkey: "Software\Classes\AppUserModelId\PrismByteDev.FireMedia"; Va
 Root: HKCU; Subkey: "Software\Classes\FireMedia.Media"; ValueType: string; ValueData: "FireMedia media file"; Tasks: mediafiles; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\FireMedia.Media\DefaultIcon"; ValueType: string; ValueData: "{app}\FireMedia.exe,0"; Tasks: mediafiles
 Root: HKCU; Subkey: "Software\Classes\FireMedia.Media\shell\open\command"; ValueType: string; ValueData: """{app}\FireMedia.exe"" launch ""%1"""; Tasks: mediafiles
-Root: HKCU; Subkey: "Software\Classes\.mp3\OpenWithProgids"; ValueType: none; ValueName: "FireMedia.Media"; Tasks: mediafiles; Flags: uninsdeletevalue
-Root: HKCU; Subkey: "Software\Classes\.flac\OpenWithProgids"; ValueType: none; ValueName: "FireMedia.Media"; Tasks: mediafiles; Flags: uninsdeletevalue
-Root: HKCU; Subkey: "Software\Classes\.wav\OpenWithProgids"; ValueType: none; ValueName: "FireMedia.Media"; Tasks: mediafiles; Flags: uninsdeletevalue
-Root: HKCU; Subkey: "Software\Classes\.ogg\OpenWithProgids"; ValueType: none; ValueName: "FireMedia.Media"; Tasks: mediafiles; Flags: uninsdeletevalue
-Root: HKCU; Subkey: "Software\Classes\.mp4\OpenWithProgids"; ValueType: none; ValueName: "FireMedia.Media"; Tasks: mediafiles; Flags: uninsdeletevalue
-Root: HKCU; Subkey: "Software\Classes\.mkv\OpenWithProgids"; ValueType: none; ValueName: "FireMedia.Media"; Tasks: mediafiles; Flags: uninsdeletevalue
-Root: HKCU; Subkey: "Software\Classes\.webm\OpenWithProgids"; ValueType: none; ValueName: "FireMedia.Media"; Tasks: mediafiles; Flags: uninsdeletevalue
-Root: HKCU; Subkey: "Software\Classes\.m3u\OpenWithProgids"; ValueType: none; ValueName: "FireMedia.Media"; Tasks: mediafiles; Flags: uninsdeletevalue
-Root: HKCU; Subkey: "Software\Classes\.m3u8\OpenWithProgids"; ValueType: none; ValueName: "FireMedia.Media"; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.mp3\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.flac\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.wav\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.ogg\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.mp4\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.mkv\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.webm\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.m3u\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.m3u8\OpenWithProgids"; ValueType: string; ValueName: "FireMedia.Media"; ValueData: ""; Tasks: mediafiles; Flags: uninsdeletevalue
 
 [Run]
 Filename: "{app}\FireMedia.exe"; Parameters: "launch"; Description: "Launch FireMedia"; Flags: nowait postinstall skipifsilent

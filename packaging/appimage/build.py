@@ -35,6 +35,7 @@ def main():
     env=dict(os.environ,ARCH='x86_64',APPIMAGE_EXTRACT_AND_RUN='1')
     subprocess.run([str(vendor/'appimagetool-x86_64.AppImage'),'--runtime-file',str(vendor/'runtime-x86_64'),str(appdir),str(output)],check=True,env=env)
     subprocess.run([str(output),'--version'],check=True,env=env)
+    subprocess.run([str(output),'--check-runtime'],check=True,env=env)
     print(output)
 
 if __name__=='__main__':main()

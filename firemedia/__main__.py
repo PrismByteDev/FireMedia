@@ -22,9 +22,27 @@ def main():
     parser.add_argument('--fullscreen',action='store_true')
     parser.add_argument('--state',help='Use a separate state file')
     parser.add_argument('--resume-update',action='store_true',help=argparse.SUPPRESS)
+    parser.add_argument('--check-runtime',action='store_true',help='Check bundled playback dependencies and exit')
     args=parser.parse_args()
+    if args.check_runtime:
+        import subprocess
+        from PyQt6.QtCore import QCoreApplication
+        from .backend import Player
+        from .runtime import find_tool,subprocess_options
+        core=QCoreApplication(sys.argv[:1])
+        try:
+            player=Player(silent=True);player.timer.stop();player.close()
+            ffmpeg=find_tool('ffmpeg')
+            if not ffmpeg:raise RuntimeError('FFmpeg was not found')
+            subprocess.run([ffmpeg,'-version'],check=True,timeout=15,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,**subprocess_options())
+            if sys.stdout:print('FireMedia playback runtime is ready.')
+            return 0
+        except Exception as error:
+            if sys.stderr:print(str(error),file=sys.stderr)
+            return 1
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app=QApplication(sys.argv[:1]);app.setApplicationName('FireMedia');app.setOrganizationName('FireMedia')
+    app.setDesktopFileName('io.github.PrismByteDev.FireMedia' if os.environ.get('FLATPAK_ID') else 'firemedia')
     app.setStyle('Fusion');app.setStyleSheet(STYLE)
     try: window=Window(args.state)
     except MpvError as error:

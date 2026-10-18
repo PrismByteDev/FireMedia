@@ -96,9 +96,35 @@ jobs:
           }
           $process = Start-Process ./dist/FireMedia/FireMedia.exe -ArgumentList '--help' -PassThru -Wait
           if ($process.ExitCode -ne 0) { throw 'Packaged app startup failed.' }
+          $process = Start-Process ./dist/FireMedia/FireMedia.exe -ArgumentList '--check-runtime' -PassThru -Wait
+          if ($process.ExitCode -ne 0) { throw 'Packaged playback dependencies failed.' }
           if ($failedSuites.Count) { throw "Tests failed: $($failedSuites -join ', ')" }
           $helper = Start-Process ./dist/FireMediaUpdate.exe -ArgumentList '--help' -PassThru -Wait
           if ($helper.ExitCode -ne 0) { throw 'Update helper startup failed.' }
+      - name: Verify installed layout, background task and media registration
+        shell: pwsh
+        run: |
+          $version = & ./.venv-build/Scripts/python.exe -c "from firemedia import __version__; print(__version__)"
+          $setup = Get-Item "dist/FireMedia-$version-windows-x64-setup.exe"
+          $installDir = Join-Path $env:RUNNER_TEMP 'FireMedia-install-test'
+          $process = Start-Process $setup.FullName -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/TASKS=mediafiles',"/DIR=`"$installDir`"") -PassThru -Wait
+          if ($process.ExitCode -ne 0) { throw 'Silent install failed.' }
+          try {
+            $current = Get-Content (Join-Path $installDir 'current.json') | ConvertFrom-Json
+            if ($current.version -ne $version) { throw 'Installed launcher selected the wrong version.' }
+            if (-not (Test-Path (Join-Path $installDir "versions/$version/FireMedia.exe"))) { throw 'Installed version payload missing.' }
+            $registration = Get-ItemProperty 'HKCU:/Software/Classes/.mp3/OpenWithProgids'
+            if ($null -eq $registration.'FireMedia.Media') { throw 'Media Open With registration missing.' }
+            $process = Start-Process (Join-Path $installDir 'FireMediaUpdate.exe') -ArgumentList @('configure','background') -PassThru -Wait
+            if ($process.ExitCode -ne 0) { throw 'Background update registration failed.' }
+            schtasks.exe /Query /TN 'FireMedia Updates'
+            if ($LASTEXITCODE -ne 0) { throw 'Background update task missing.' }
+          } finally {
+            $process = Start-Process (Join-Path $installDir 'FireMediaUpdate.exe') -ArgumentList @('configure','disabled') -PassThru -Wait
+            if ($process.ExitCode -ne 0) { throw 'Background task removal failed.' }
+            $process = Start-Process (Join-Path $installDir 'unins000.exe') -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -PassThru -Wait
+            if ($process.ExitCode -ne 0) { throw 'Uninstall failed.' }
+          }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-build

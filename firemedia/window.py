@@ -727,9 +727,10 @@ class Window(QMainWindow):
         autoload.toggled.connect(lambda v:(setattr(self,'autoload_subtitles',v),self.schedule_save()));form.addRow(autoload)
         plugins=QPushButton('Manage plugins…');plugins.clicked.connect(self.show_plugins);form.addRow('Plugins',plugins)
         visual=QPushButton('Presets, background, images…');visual.clicked.connect(self.show_visual_settings);form.addRow('Visualizer',visual)
-        awake=QCheckBox('Prevent sleep during playback (keep the screen on for videos)');awake.setChecked(self.keep_awake)
+        awake=QCheckBox('Prevent sleep during playback');awake.setChecked(self.keep_awake)
+        awake.setToolTip('Audio prevents sleep; video also keeps the screen on. Pausing releases the wake lock.')
         awake.toggled.connect(lambda value:(setattr(self,'keep_awake',value),self.sync(),self.schedule_save()));form.addRow(awake)
-        self.updates.add_settings(form,dialog)
+        updates=QPushButton('Configure updates…');updates.clicked.connect(self.updates.show_settings);form.addRow('Updates',updates)
         profile=QLabel('System profile: '+(self.power_profile or 'not available (Auto uses full detail)'));form.addRow(profile)
         dialog.exec()
 

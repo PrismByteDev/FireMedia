@@ -116,6 +116,25 @@ class UpdateTests(unittest.TestCase):
     def test_systemd_exec_escaping(self):
         text=systemd_quote('/tmp/100% "media"/FireMedia.AppImage')
         self.assertIn('100%%',text);self.assertIn('\\"media\\"',text);self.assertTrue(text.startswith('"'))
+    def test_publishing_signs_the_exact_platform_inventory_and_checksum(self):
+        from tools.sign_updates import sign_release
+        output=self.root/'release';output.mkdir()
+        assets=[]
+        for platform,kind in [('windows-x64','windows-portable'),('appimage-x64','linux-appimage')]:
+            assets.append(dict(self.payload['assets'][platform],package=kind))
+        (output/'release-info.json').write_text(json.dumps({'repository':REPOSITORY,'version':'1.2.3','prerelease':False,'assets':assets}))
+        private=self.key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption())
+        verify=verify_manifest
+        def check_signed(envelope,now):return verify(envelope,keys={'primary-2026':self.keys['test']},now=now)
+        with patch('firemedia.update_core.verify_manifest',side_effect=check_signed):path=sign_release(output,private)
+        envelope=json.loads(path.read_text());self.assertEqual(envelope['payload']['assets'],self.payload['assets'])
+        self.assertIn(hashlib.sha256(path.read_bytes()).hexdigest()+'  update.json',(output/'SHA256SUMS').read_text())
+    def test_flatpak_does_not_announce_github_only_releases_or_install(self):
+        atomic_json(self.config,{'mode':'notify'})
+        metadata={'releases':[{'version':'0.1.0','type':'stable'}]}
+        with patch('firemedia.update_core.fetch',return_value=(json.dumps(metadata).encode(),'')),patch('firemedia.update_worker.discover') as github,patch('firemedia.update_worker.install_appimage') as install:
+            self.assertEqual(check(self.config,'flatpak',None,running='0.2.0',force=True)['status'],'current')
+            github.assert_not_called();install.assert_not_called()
 
 
 class WakeLockTests(unittest.TestCase):

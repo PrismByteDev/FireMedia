@@ -105,9 +105,18 @@ $toast=[Windows.UI.Notifications.ToastNotification]::new($xml); $toast.Tag='upda
 def native_notification(title, message, action='view'):
     try:
         if sys.platform == 'win32': windows_notification(title, message, action)
-        else: run(['notify-send', '--app-name=FireMedia', '--icon=firemedia', title, message])
+        else:
+            from PyQt6.QtCore import QCoreApplication,QVariant,QMetaType
+            from PyQt6.QtDBus import QDBusConnection,QDBusMessage,QDBus
+            core=QCoreApplication.instance() or QCoreApplication([])
+            identifier=QVariant(0);identifier.convert(QMetaType(QMetaType.Type.UInt.value))
+            actions=QVariant([]);actions.convert(QMetaType(QMetaType.Type.QStringList.value))
+            call=QDBusMessage.createMethodCall('org.freedesktop.Notifications','/org/freedesktop/Notifications','org.freedesktop.Notifications','Notify')
+            call.setArguments(['FireMedia',identifier,'firemedia',title,message,actions,{},-1])
+            reply=QDBusConnection.sessionBus().call(call,QDBus.CallMode.Block,2000)
+            if reply.type()==QDBusMessage.MessageType.ErrorMessage:return False
         return True
-    except (OSError, ValueError, subprocess.SubprocessError): return False
+    except (OSError, ValueError, ImportError, RuntimeError, subprocess.SubprocessError): return False
 
 
 def appimage_desktop(image):

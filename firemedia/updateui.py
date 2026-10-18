@@ -77,6 +77,7 @@ class UpdateManager(QObject):
     def finish(self, result):
         if self.closed: return
         self.busy = False; self.result = result
+        if result.get('status')=='error':self.mode=read_json(self.config).get('mode','notify')
         self.message = result.get('message', 'No new update available.'); self.changed.emit()
         if result.get('status') == 'available':
             self.window.notify(self.message + ' Open Settings → Updates.')
@@ -142,12 +143,21 @@ class UpdateManager(QObject):
         view.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(self.result.get('url', RELEASES))))
         def refresh():
             status.setText(self.message); check_button.setEnabled(not self.busy)
+            mode.blockSignals(True);mode.setCurrentIndex(max(0,mode.findData(self.mode)));mode.blockSignals(False)
             update.setVisible(self.kind in ('windows', 'appimage') and self.result.get('status') == 'available'); update.setEnabled(not self.busy)
             restart.setVisible(self.result.get('status') == 'installed')
         self.changed.connect(refresh); dialog.finished.connect(lambda: self.changed.disconnect(refresh)); refresh()
         info = QLabel('Background updates run every ten minutes while signed in. Notify never installs without your choice.' if self.kind in ('windows', 'appimage')
                       else 'Updates are installed through your software manager or the release download. FireMedia only notifies you.')
         info.setWordWrap(True); form.addRow(info)
+        if self.kind=='appimage':
+            desktop=QPushButton('Desktop / file registration…');desktop.clicked.connect(self.setup_appimage);form.addRow(desktop)
+
+    def show_settings(self):
+        dialog,form=self.window.dialog('FireMedia updates')
+        self.add_settings(form,dialog)
+        try:dialog.exec()
+        finally:dialog.deleteLater()
 
     def setup_appimage(self):
         if self.closed: return
@@ -155,7 +165,7 @@ class UpdateManager(QObject):
         info = QLabel('Choose update behavior and whether to make FireMedia available in Open With. You can change updates later in Settings.'); info.setWordWrap(True); form.addRow(info)
         mode = QComboBox()
         for item in self.modes: mode.addItem(LABELS[item], item)
-        mode.setCurrentIndex(mode.findData('notify')); form.addRow('Updates', mode)
+        mode.setCurrentIndex(max(0,mode.findData(self.mode))); form.addRow('Updates', mode)
         associate = QCheckBox('Register FireMedia for media files and add it to the application menu'); form.addRow(associate)
         dialog.exec()
         try:
