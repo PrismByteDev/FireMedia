@@ -6,7 +6,10 @@ New-Item -ItemType Directory -Force $vendor | Out-Null
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('firemedia-playback-' + [guid]::NewGuid())
 New-Item -ItemType Directory $temp | Out-Null
 try {
-    $release = Invoke-RestMethod 'https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest'
+    $headers = @{ Accept = 'application/vnd.github+json'; 'User-Agent' = 'FireMedia-build' }
+    # Scope authentication to the GitHub API; never forward it to binary hosts.
+    if ($env:GH_TOKEN) { $headers.Authorization = "Bearer $env:GH_TOKEN" }
+    $release = Invoke-RestMethod 'https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest' -Headers $headers
     $asset = @($release.assets | Where-Object { $_.name -match '^mpv-dev-x86_64-\d.*\.7z$' })
     if ($asset.Count -ne 1) { throw 'No unambiguous baseline x64 libmpv build found.' }
     $asset = $asset[0]
