@@ -7,7 +7,7 @@ import unittest
 import wave
 from pathlib import Path
 import numpy as np
-from PyQt6.QtCore import QMimeData, QUrl, Qt
+from PyQt6.QtCore import QMimeData, QUrl, Qt, QEvent
 from PyQt6.QtGui import QDropEvent
 from PyQt6.QtWidgets import QApplication
 from firemedia.window import Window,STYLE
@@ -32,7 +32,7 @@ class NativeTests(unittest.TestCase):
             f.setparams((1,2,44100,0,'NONE',''));f.writeframes(samples.tobytes())
         self.window=Window(self.root/'state.json',silent=True);self.window.show();app.processEvents()
     def tearDown(self):
-        self.window.close();app.processEvents();self.temp.cleanup()
+        self.window.close();app.processEvents();app.sendPostedEvents(None,QEvent.Type.DeferredDelete);self.temp.cleanup()
     def test_layout_and_drawer(self):
         w=self.window
         self.assertFalse(w.effects_bar.isVisible());self.assertFalse(w.playlist_panel.isVisible())

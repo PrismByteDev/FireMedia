@@ -6,7 +6,7 @@ import json,math,time,tempfile,unittest,subprocess,base64,sys
 from pathlib import Path
 from unittest.mock import patch
 from zipfile import ZipFile
-from PyQt6.QtCore import Qt,QPoint,QTimer
+from PyQt6.QtCore import Qt,QPoint,QTimer,QEvent
 from PyQt6.QtGui import QImage,QColor,QPalette
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication,QToolButton,QTabWidget,QLabel
@@ -119,7 +119,13 @@ class ExtendedVisualTests(unittest.TestCase):
 class ThemeCoverUITests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.w=Window(self.root/'state.json',silent=True)
-    def tearDown(self):self.w.close();app.processEvents();self.temp.cleanup()
+    def tearDown(self):
+        self.w.close();app.processEvents()
+        # processEvents alone leaves DeferredDelete queued. Destroy windows in
+        # Qt (with the GIL released), not later inside Python cyclic GC while
+        # the D-Bus thread is running disconnectNotify callbacks.
+        app.sendPostedEvents(None,QEvent.Type.DeferredDelete)
+        self.temp.cleanup()
     def test_theme_modes_portable_image_and_restart(self):
         image=QImage(16,8,QImage.Format.Format_RGBA8888);image.fill(QColor('#77BBFF'));path=self.root/'theme.png';image.save(str(path))
         s=simple_theme(200,'light');s.update(mode='advanced',surface_mode='image',image=embed_image(path),font='Sans Serif',font_size=16)

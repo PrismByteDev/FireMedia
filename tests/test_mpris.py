@@ -9,6 +9,7 @@ import wave
 from pathlib import Path
 import numpy as np
 from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QEvent
 from firemedia.window import Window
 
 app=QApplication.instance() or QApplication([])
@@ -37,7 +38,7 @@ class MprisTests(unittest.TestCase):
         self.window.add_sources([str(self.root/'one.wav'),str(self.root/'two.wav')])
         self.assertTrue(wait_until(lambda:self.window.player.loaded))
     def tearDown(self):
-        self.window.close();app.processEvents();self.temp.cleanup()
+        self.window.close();app.processEvents();app.sendPostedEvents(None,QEvent.Type.DeferredDelete);self.temp.cleanup()
     def call(self,method,*args):
         command=['gdbus','call','--session','--dest',self.window.mpris.service_name,
                  '--object-path','/org/mpris/MediaPlayer2','--method',method,*args]

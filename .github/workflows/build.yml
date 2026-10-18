@@ -31,13 +31,13 @@ jobs:
       - name: Install native playback and test dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libmpv2 ffmpeg libseccomp2 dbus-x11 libglib2.0-bin libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-render-util0 xvfb xauth gdb
+          sudo apt-get install -y --no-install-recommends libmpv2 ffmpeg libseccomp2 dbus-x11 libglib2.0-bin libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-image0 libxcb-render-util0 xvfb xauth
           python -m pip install -c packaging/constraints.txt . build
       - name: Test in an isolated session bus
         env:
           FIREMEDIA_TEST_DBUS: '1'
         run: |
-          xvfb-run -a dbus-run-session -- timeout --signal=INT --kill-after=15s 60s gdb --batch --return-child-result -ex 'set debuginfod enabled off' -ex 'handle SIGPIPE nostop noprint pass' -ex run -ex 'thread apply all bt' --args python -u -m unittest discover -s tests -v
+          xvfb-run -a dbus-run-session -- timeout 90s python -u -c "import faulthandler, unittest; faulthandler.dump_traceback_later(25, repeat=True); unittest.main(module=None, argv=['unittest', 'discover', '-s', 'tests', '-v'])"
       - name: Build Linux and Python packages
         run: |
           python packaging/linux/build-deb.py
