@@ -59,11 +59,18 @@ Open **Actions → CI → Run workflow**, select `main`, leave **Also build and 
 the Windows packages** checked, and run it. Pushes and pull requests run Linux
 checks automatically; this manual option adds the Windows ZIP and installer.
 
-When the run succeeds, open its summary and download **linux-build** or
-**windows-build** from **Artifacts**. Sign in to GitHub to download artifacts.
-The **appimage-build** artifact contains the Linux AppImage. The Windows artifact contains the portable ZIP and setup EXE; extract the artifact
-first, then extract the portable ZIP and run `FireMedia/FireMedia.exe`, or run the
-installer. Artifacts expire after one day, so download them promptly or run a new
+When the run succeeds, open its summary and choose a download from **Artifacts**:
+
+- **windows-installer-build** contains only the setup EXE.
+- **windows-portable-build** contains only the portable ZIP.
+- **linux-build** contains the Debian and Python packages.
+- **appimage-build** contains the Linux AppImage.
+
+Sign in to GitHub to download artifacts. Extract the installer artifact and run
+the setup EXE. For portable, extract the artifact, then the portable ZIP, and run
+`FireMedia/FireMedia.exe`. The release workflow collects both Windows artifacts
+and attaches the setup EXE and portable ZIP as separate release downloads.
+Artifacts expire after one day, so download them promptly or run a new
 build. A CI artifact is a test build; reviewed releases belong on Releases.
 
 Windows dependency lookup uses the job's read-only GitHub token to avoid shared

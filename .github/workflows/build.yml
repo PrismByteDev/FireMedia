@@ -125,12 +125,19 @@ jobs:
             $process = Start-Process (Join-Path $installDir 'unins000.exe') -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -PassThru -Wait
             if ($process.ExitCode -ne 0) { throw 'Uninstall failed.' }
           }
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Upload Windows portable ZIP
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: windows-build
-          path: |
-            dist/FireMedia-windows-x64.zip
-            dist/*-windows-x64-setup.exe
+          name: windows-portable-build
+          path: dist/FireMedia-windows-x64.zip
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-installer-build
+          path: dist/*-windows-x64-setup.exe
           compression-level: 0
           if-no-files-found: error
           retention-days: 1
