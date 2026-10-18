@@ -47,7 +47,8 @@ PR code runs with a write token or release credentials.
 
 Use standard Ubuntu/Windows runners. Windows packages build only for explicit
 manual requests and release tags, not on every PR. Temporary artifacts expire
-after one day and completed duplicate CI runs are canceled. Build minutes are
+after one day and superseded runs for the same trigger and branch are canceled.
+Manual builds run independently of push/PR checks. Build minutes are
 free for public repos on standard runners; artifact storage still has an
 allowance. Check organization storage/budgets before retaining many builds.
 No paid larger runners or private signing service is configured.
