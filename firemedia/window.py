@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
     QFormLayout, QComboBox, QCheckBox, QPushButton, QDialogButtonBox, QListWidget, QStyle, QStyleOptionSlider,
     QListWidgetItem, QAbstractItemView, QSplitter, QInputDialog, QMessageBox, QLineEdit, QFontDialog, QSpinBox, QGraphicsOpacityEffect, QDoubleSpinBox, QColorDialog)
 from .backend import Player, MpvError
+from . import __version__, __release__
 from .order import PlaybackOrder
 from .desktop import Mpris
 from .video import VideoSurface
@@ -204,6 +205,7 @@ class Window(QMainWindow):
         self.visual.waveform_provider = self.analysis.waveform
         self.analysis.warning.connect(self.notify)
         self.set_visual_bar_count(self.state.get('bar_count',64))
+        self.visual.set_particle_limit(self.state.get('particle_limit','Medium'))
         self.visual.physics = self.state.get('physics',True)
         self.visual.tension = self.state.get('tension',140)
         self.visual.intensity = self.state.get('intensity',70)
@@ -256,7 +258,7 @@ class Window(QMainWindow):
         self.full_header=QWidget();title_layout=QHBoxLayout(self.full_header);title_layout.setContentsMargins(10,0,10,0)
         title_icon=QLabel();title_icon.setPixmap(self.windowIcon().pixmap(26,26));title_layout.addWidget(title_icon)
         self.full_title = QLabel('FireMedia');self.full_title.setObjectName('fullTitle');title_layout.addWidget(self.full_title,1)
-        self.full_header.hide();layout.addWidget(self.full_header)
+        self.full_header.setParent(root);self.full_header.hide()
         self.splitter = QSplitter(Qt.Orientation.Vertical);layout.addWidget(self.splitter)
         player_area = self.player_area = QWidget();area = self.player_layout = QVBoxLayout(player_area);area.setContentsMargins(0,0,0,0);area.setSpacing(0)
         self.surface = Surface();self.surface.double_clicked.connect(self.toggle_fullscreen)
@@ -403,6 +405,7 @@ class Window(QMainWindow):
         self.transport.raise_()
 
     def update_control_visibility(self,animate=True,nearby=None):
+        self.update_fullscreen_header()
         if not hasattr(self,'transport_opacity'): return
         if nearby is None:
             point=self.surface.mapFromGlobal(QCursor.pos())
@@ -424,7 +427,18 @@ class Window(QMainWindow):
 
     def toggle_fullscreen(self):
         if self.isFullScreen(): self.showNormal();self.full_header.hide()
-        else: self.showFullScreen();self.full_header.show()
+        else: self.showFullScreen();self.update_fullscreen_header()
+
+    def update_fullscreen_header(self,nearby=None):
+        if not self.isFullScreen() or self.isMinimized():self.full_header.hide();return
+        root=self.centralWidget()
+        height=max(34,self.full_header.sizeHint().height())
+        if nearby is None:
+            point=root.mapFromGlobal(QCursor.pos())
+            nearby=0<=point.x()<root.width() and 0<=point.y()<height+24
+        self.full_header.setGeometry(0,0,root.width(),height)
+        self.full_header.setVisible(nearby)
+        if nearby:self.full_header.raise_()
 
     def escape(self):
         if self.isFullScreen(): self.showNormal();self.full_header.hide()
@@ -715,6 +729,7 @@ class Window(QMainWindow):
 
     def show_settings(self):
         dialog,form=self.dialog('FireMedia settings')
+        form.addRow('Version',QLabel(f'{__release__} (build {__version__})'))
         themes=QPushButton('Customize themes…');themes.clicked.connect(self.show_themes);form.addRow('Appearance',themes)
         row=QWidget();options=QHBoxLayout(row);options.setContentsMargins(0,0,0,0)
         shuffle=QComboBox();shuffle.addItems(['Off','Every loop','On']);shuffle.setCurrentText(self.shuffle_mode);shuffle.currentTextChanged.connect(self.set_shuffle)
@@ -722,6 +737,11 @@ class Window(QMainWindow):
         options.addWidget(QLabel('Shuffle'));options.addWidget(shuffle);options.addWidget(QLabel('Loop'));options.addWidget(loop);form.addRow('Playback',row)
         mode=QComboBox();mode.addItems(['Auto','On','Off']);mode.setCurrentText(self.ldm)
         mode.currentTextChanged.connect(self.set_ldm);form.addRow('Low Detail Mode',mode)
+        limit=QComboBox();limit.setAccessibleName('Particle limit')
+        for name,count in self.visual.PARTICLE_LIMITS.items():limit.addItem(f'{name}: {count if count is not None else "∞"}',name)
+        limit.setCurrentIndex(limit.findData(self.visual.particle_limit_mode))
+        limit.currentIndexChanged.connect(lambda:(self.visual.set_particle_limit(limit.currentData()),self.schedule_save()))
+        form.addRow('Particle limit',limit)
         info=QLabel('Auto follows the Linux power-saving profile.\nOn reduces bars and particles and hides the visualizer\nwhen switching to another application.');info.setWordWrap(True);form.addRow(info)
         autoload=QCheckBox('Automatically load SRT files beside videos');autoload.setChecked(self.autoload_subtitles)
         autoload.toggled.connect(lambda v:(setattr(self,'autoload_subtitles',v),self.schedule_save()));form.addRow(autoload)
@@ -1123,7 +1143,7 @@ class Window(QMainWindow):
     def persist(self):
         state={'queue':[asdict(t) for t in self.queue],'playlists':self.saved,'shuffle':self.shuffle_mode,
                'loop':self.loop_mode,'ldm':self.ldm,'volume':self.volume.value(),'eq':self.gains,'keep_awake':self.keep_awake,
-               'bar_count':self.visual.bar_count,'physics':self.visual.physics,'tension':self.visual.tension,'intensity':self.visual.intensity,
+               'bar_count':self.visual.bar_count,'particle_limit':self.visual.particle_limit_mode,'physics':self.visual.physics,'tension':self.visual.tension,'intensity':self.visual.intensity,
                'preset':self.visual.preset,'color':self.visual.color,'subtitle_style':self.subtitle_style,
                'visual_spec':self.visual.spec,'visual_presets':self.visual_presets,
                'enabled_plugins':self.plugins.enabled_state(),'plugin_security':2,'plugin_visualizer':self.plugins.selected,

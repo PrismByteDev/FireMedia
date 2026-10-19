@@ -1,5 +1,16 @@
 # Changelog
 
+## vBETA.0.1 — 2026-10-18 (package/tag 0.3.1 / v0.3.1)
+
+- Settings offers a shared particle limit: Low (100), Medium (400, default),
+  High (3200), or Uncapped (∞). The choice persists across restarts; lowering
+  it immediately removes excess particles. Fog retains its separate 96 limit.
+- Settings displays the public release label and numeric build version.
+- The fullscreen top bar hides away from the pointer and reappears near the
+  top edge as an overlay, without resizing the video/visualizer.
+- Numeric release tags keep signed updates compatible with vBETA.0.0 clients.
+  Debian remains notify-only; Flatpak publication remains pending.
+
 ## vBETA.0.0 — 2026-10-17 (package 0.3.0)
 
 - Signed update discovery, ten-minute checks, native notifications, and update settings.

@@ -158,7 +158,7 @@ class VisualSettings(QDialog):
         row=QHBoxLayout();count=QSpinBox();count.setRange(8,256);count.setValue(window.visual.bar_count);count.setAccessibleName('Visualizer bar count');count.valueChanged.connect(window.set_visual_bar_count)
         row.addWidget(QLabel('Bar count'));row.addWidget(count);smooth=QCheckBox('Smooth falling bars');smooth.setChecked(window.visual.physics);smooth.toggled.connect(lambda v:(setattr(window.visual,'physics',v),window.schedule_save()));row.addWidget(smooth)
         fall=QSpinBox();fall.setRange(30,280);fall.setValue(window.visual.tension);fall.valueChanged.connect(lambda v:(setattr(window.visual,'tension',v),window.schedule_save()));row.addWidget(QLabel('Fall speed'));row.addWidget(fall);row.addStretch();layout.addLayout(row)
-        info=QLabel('Changes preview live. Transparency: 0 = opaque, 100 = invisible. Up to 4 particle channels (400 total), plus separate fog. LDM: 24 bars, no particles/fog.');info.setWordWrap(True);layout.addWidget(info)
+        info=QLabel('Changes preview live. Transparency: 0 = opaque, 100 = invisible. Up to 4 particle channels share the particle limit chosen in Settings, plus separate fog. LDM: 24 bars, no particles/fog.');info.setWordWrap(True);layout.addWidget(info)
         tabs=QTabWidget();layout.addWidget(tabs,1)
         for section,fields in FIELDS.items():
             scroll=QScrollArea();scroll.setWidgetResizable(True);page=QWidget();form=QFormLayout(page);form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow);scroll.setWidget(page);tabs.addTab(scroll,section)

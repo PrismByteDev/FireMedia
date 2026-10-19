@@ -6,6 +6,7 @@ import time
 import unittest
 import wave
 from pathlib import Path
+from unittest.mock import patch
 import numpy as np
 from PyQt6.QtCore import QMimeData, QUrl, Qt, QEvent
 from PyQt6.QtGui import QDropEvent
@@ -40,6 +41,27 @@ class NativeTests(unittest.TestCase):
         self.assertTrue(w.effects_bar.isVisible());self.assertTrue(w.playlist_panel.isVisible())
         self.assertLess(w.visual.height(),w.height()-150)
         w.toggle_effects();self.assertFalse(w.effects_bar.isVisible())
+    def test_particle_limit_settings_version_and_persistence(self):
+        from PyQt6.QtWidgets import QComboBox,QLabel,QDialog
+        from firemedia import __version__,__release__
+        w=self.window
+        def inspect(dialog):
+            self.assertTrue(any(__release__ in label.text() and __version__ in label.text() for label in dialog.findChildren(QLabel)))
+            limit=next(c for c in dialog.findChildren(QComboBox) if c.accessibleName()=='Particle limit')
+            self.assertEqual([limit.itemText(i) for i in range(limit.count())],['Low: 100','Medium: 400','High: 3200','Uncapped: ∞'])
+            limit.setCurrentIndex(3);self.assertIsNone(w.visual.particle_limit)
+            return 0
+        with patch.object(QDialog,'exec',inspect):w.show_settings()
+        w.persist();other=Window(w.state_path,silent=True)
+        try:self.assertEqual(other.visual.particle_limit_mode,'Uncapped');self.assertIsNone(other.visual.particle_limit)
+        finally:other.close()
+    def test_fullscreen_header_overlays_without_resizing_visualizer(self):
+        w=self.window;w.toggle_fullscreen();app.processEvents();w.overlay_timer.stop()
+        size=w.visual.size();revision=w.visual.geometry_revision
+        w.update_fullscreen_header(nearby=True);app.processEvents();self.assertTrue(w.full_header.isVisible())
+        w.update_fullscreen_header(nearby=False);app.processEvents();self.assertFalse(w.full_header.isVisible())
+        self.assertEqual(w.visual.size(),size);self.assertEqual(w.visual.geometry_revision,revision)
+        w.escape();app.processEvents();self.assertFalse(w.isFullScreen());self.assertFalse(w.full_header.isVisible())
     def test_m3u8_import_playback_eq_seek_and_analysis(self):
         p=self.root/'mix.m3u8';p.write_text('#EXTM3U\n#EXTINF:4,Actual native audio test\ntone.wav\n')
         w=self.window;errors=[];w.player.error.connect(errors.append)
@@ -159,12 +181,12 @@ class NativeTests(unittest.TestCase):
             else: self.skipTest('No non-C locale installed')
         finally: locale.setlocale(locale.LC_NUMERIC,numeric)
 
-    def test_particle_cap_is_400(self):
+    def test_default_particle_cap_is_400(self):
         from unittest.mock import patch
         v=self.window.visual;v.level_provider=None;v.set_bar_count(256);v.paused=False;v.levels=[1.0]*256;v.intensity=100
         with patch('firemedia.visualizer.random.random',return_value=0):
             for _ in range(8): v.tick()
-        self.assertEqual(v.MAX_PARTICLES,400)
+        self.assertEqual(v.particle_limit,400)
         self.assertEqual(len(v.particles),400)
 
     def test_playlist_drop_concatenates_and_resolves_relative_paths(self):

@@ -81,7 +81,7 @@ so a blocked GUI test cannot consume the full job timeout without diagnostics.
 
 ## Version and release assets
 
-The single application version is `firemedia.__version__`, currently `0.3.0`.
+The single application version is `firemedia.__version__`, currently `0.3.1`.
 Setuptools, `.deb`, installer builds, and release assembly consume it. Stable
 tags are `vX.Y.Z`. Preview tags may use Python suffixes such as `v0.3.0rc1`;
 the draft is marked prerelease. The workflow fails if the tag and code differ.
@@ -92,6 +92,12 @@ asset filenames and installer versions retain `0.3.0`. The updater verifies
 this exact alias and signed download URLs. Other arbitrary tag/version mismatches
 remain rejected. Beta/Canary channel selection is planned, not yet available;
 see [UPDATES.md](UPDATES.md#planned-release-channels).
+
+Starting with **vBETA.0.1**, the public release title differs from its numeric
+Git tag: title **FireMedia vBETA.0.1**, tag **v0.3.1**, package **0.3.1**.
+Settings displays both the release label and build version. Numeric tags let
+vBETA.0.0 clients validate future update URLs without a manual updater upgrade.
+Use numeric tags for subsequent releases; keep the initial alias unchanged.
 
 The draft includes:
 

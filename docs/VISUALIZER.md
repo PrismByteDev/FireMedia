@@ -125,7 +125,7 @@ collision emits puffs at the **bottom of the screen**, near the impacted bar’s
 horizontal position. Puffs spread, slowly rise, and fade over their lifetime.
 Toggle fog, set its RGBA color, collision emission, lifetime, radius, and rise
 speed. Fog draws over the bottom of the bars and does not consume the regular
-400-particle budget. LDM disables and clears fog. There is no continuous fog
+configured particle budget. LDM disables and clears fog. There is no continuous fog
 emission without collisions. The entire enabled field is clickable. If fog is
 enabled while LDM is active, the editor explains that LDM hides it; turn LDM
 Off in Settings to see fog.
@@ -152,7 +152,7 @@ controls enable, emission, collision emission, image, size, fade, motion, and
 gradient overrides. Channel 1 inherits older presets; channels 2–4 start
 disabled. Switching channels preserves edits in all other channels. Saving,
 loading, exporting, and importing presets preserves all four channels and their
-embedded images. The **400-particle cap is shared across the four channels**;
+embedded images. The **particle limit selected in Settings is shared across the four channels**;
 fog has its own pool. Mods can request a specific channel using `channel=1..4`.
 
 ## Particle motion and SoftN
@@ -160,7 +160,11 @@ fog has its own pool. Mods can request a specific channel using `channel=1..4`.
 **Range** enables minimum/maximum sampling. Per-particle values are sampled
 once at spawn; emission rate is sampled per bar per tick, and collision
 emission per bar impact. Fractional counts use stochastic rounding. All
-particles share the existing cap of **400**. LDM removes particles and caps
+particles share the limit chosen in Settings: **Low: 100**, **Medium: 400**
+(default), **High: 3200**, or **Uncapped: ∞**. Uncapped imposes no live-particle
+count limit; emission rates and lifetimes still apply. Lowering the limit trims
+existing particles immediately. This global performance choice persists across
+restarts and is independent of visualizer presets. LDM removes particles and caps
 active bars at 24 while preserving your preferred count.
 
 Emission is particles per active bar per second above the audio activity

@@ -7,7 +7,10 @@ Drafts and prereleases never trigger stable automatic installation.
 
 The initial main release is named **vBETA.0.0**, with numeric package version
 **0.3.0**. This explicit release-label alias is included in signed metadata;
-version comparisons still use the numeric package version.
+version comparisons still use the numeric package version. Starting with
+**vBETA.0.1** (build **0.3.1**), release tags are numeric (`v0.3.1`) and the
+public Beta name is the release title and Settings version label. This keeps
+updates compatible with the first released updater.
 
 ## Planned release channels
 

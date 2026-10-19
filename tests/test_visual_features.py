@@ -105,6 +105,17 @@ class VisualFeatureTests(unittest.TestCase):
         self.visual.configure(DEFAULT)
         with self.assertRaises(ValueError):self.visual.summon_particle(10,20,lifetime=float('nan'))
         self.visual.set_quality(True);self.assertFalse(self.visual.summon_particle(10,20));self.assertFalse(self.visual.particles)
+    def test_particle_limit_modes_trim_immediately_and_uncapped_exceeds_high(self):
+        v=self.visual
+        for mode,expected in [('Low',100),('Medium',400),('High',3200),('Uncapped',3300)]:
+            v.particles.clear();v.set_particle_limit(mode)
+            for _ in range(3300):v.summon_particle(10,20)
+            self.assertEqual(len(v.particles),expected,mode)
+        v.set_particle_limit('Low');self.assertEqual(len(v.particles),100)
+        v.emit_particles(25,10,20);self.assertEqual(len(v.particles),100)
+        v.set_particle_limit('Uncapped');v.emit_particles(25,10,20);self.assertEqual(len(v.particles),125)
+        v.suspend(True);self.assertFalse(v.summon_particle(10,20));self.assertFalse(v.particles)
+        v.set_particle_limit('bad');self.assertEqual(v.particle_limit,400)
     def test_every_preset_paints_and_dynamic_background_alpha(self):
         self.visual.show()
         for name,spec in BUILTIN_VISUALS.items():

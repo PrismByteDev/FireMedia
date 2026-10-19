@@ -261,7 +261,7 @@ class Particle:
 
 
 class Visualizer(QWidget):
-    MAX_PARTICLES = 400
+    PARTICLE_LIMITS = {'Low': 100, 'Medium': 400, 'High': 3200, 'Uncapped': None}
 
     def __init__(self,parent=None):
         super().__init__(parent)
@@ -269,6 +269,7 @@ class Visualizer(QWidget):
         self.bar_count=64;self.bars=[Bar() for _ in range(64)];self.levels=[0.0]*64
         self.low_detail=False;self.physics=True;self.tension=140;self.intensity=70
         self.preset='Default';self.color='Rainbow';self.particles=[];self.fog=[];self.cover=QImage()
+        self.particle_limit_mode='Medium';self.particle_limit=400
         self.paused=True;self.has_media=False;self.subtitle='';self.subtitle_style='Glow'
         self.subtitle_size=38;self.subtitle_font='Sans Serif';self.demo=False;self.level_provider=None;self.waveform_provider=None;self.waveform=[]
         self.plugins=None;self.clock=time.monotonic();self.phase=0;self.dt=0
@@ -304,6 +305,11 @@ class Visualizer(QWidget):
         self.update()
 
     def set_levels(self,levels):self.levels=levels
+    def set_particle_limit(self,mode):
+        if not isinstance(mode,str) or mode not in self.PARTICLE_LIMITS:mode='Medium'
+        self.particle_limit_mode=mode;self.particle_limit=self.PARTICLE_LIMITS[mode]
+        if self.particle_limit is not None:del self.particles[self.particle_limit:]
+        self.update()
     @property
     def effective_bar_count(self):return min(self.bar_count,24) if self.low_detail else self.bar_count
     def set_bar_count(self,count):
@@ -357,7 +363,8 @@ class Visualizer(QWidget):
         channel=options.pop('channel',1)
         if isinstance(channel,bool) or not isinstance(channel,int) or not 1<=channel<=4:raise ValueError('Particle channel must be 1–4')
         index=channel-1;s=self.channels[index]
-        if self.low_detail or not s['particles_enabled'] or len(self.particles)>=self.MAX_PARTICLES:return False
+        if self.low_detail or self._suspended or self.window().isMinimized() or not s['particles_enabled']:return False
+        if self.particle_limit is not None and len(self.particles)>=self.particle_limit:return False
         def get(key,alias=None):
             value=float(sample(options.get(alias or key,s[key])))
             if not math.isfinite(value):raise ValueError('Particle values must be finite')
@@ -377,7 +384,8 @@ class Visualizer(QWidget):
         p.channel=index;self.particles.append(p);return True
 
     def emit_particles(self,amount,x,y,channel=0):
-        amount=max(0,min(self.MAX_PARTICLES-len(self.particles),amount))
+        amount=max(0,amount)
+        if self.particle_limit is not None:amount=min(self.particle_limit-len(self.particles),amount)
         count=int(amount)+(random.random()<amount-int(amount))
         for _ in range(count):self.summon_particle(x,y,channel=channel+1)
 

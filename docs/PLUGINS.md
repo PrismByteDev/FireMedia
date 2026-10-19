@@ -207,7 +207,7 @@ Do not keep drawing contexts across callbacks.
 
 `api.summonParticle(x, y, **options)` queues a particle request. Its return value
 reports whether the worker accepted the request, not whether the host later
-emits it. LDM, disabled channels, and the shared **400-particle cap** can drop
+emits it. LDM, disabled channels, and the shared **particle limit chosen in Settings** can drop
 requests. Fog is a separate native pool, capped at 96.
 
 | Option | Meaning |
